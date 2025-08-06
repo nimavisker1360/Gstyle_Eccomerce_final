@@ -83,7 +83,7 @@ const categories: Category[] = [
   {
     id: "beauty",
     name: "Beauty & Cosmetics",
-    persianName: "آرایش و زیبایی",
+    persianName: "لوازم آرایشی و بهداشتی",
     image: "/images/buity.jpg",
     searchQuery: "",
   },

@@ -1069,8 +1069,8 @@ const data: Data = {
       href: "/search?category=مد و پوشاک",
     },
     {
-      name: "آرایش و زیبایی",
-      href: "/search?category=آرایش و زیبایی",
+      name: "لوازم آرایشی و بهداشتی",
+      href: "/search?category=لوازم آرایشی و بهداشتی",
     },
     {
       name: "لوازم ورزشی",

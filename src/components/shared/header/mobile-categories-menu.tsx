@@ -134,7 +134,8 @@ export default function MobileCategoriesMenu() {
 
   const renderSubCategories = (categoryName: string, subCategories: any) => {
     const showBlueTitles =
-      categoryName === "مد و پوشاک" || categoryName === "آرایش و زیبایی";
+      categoryName === "مد و پوشاک" ||
+      categoryName === "لوازم آرایشی و بهداشتی";
 
     return (
       <div className="mt-2 mr-4 space-y-1">
@@ -220,7 +221,7 @@ export default function MobileCategoriesMenu() {
                   {expandedCategory === menu.name &&
                     renderSubCategories(menu.name, fashionCategories)}
                 </div>
-              ) : menu.name === "آرایش و زیبایی" ? (
+              ) : menu.name === "لوازم آرایشی و بهداشتی" ? (
                 <div>
                   <button
                     onClick={() => toggleCategory(menu.name)}

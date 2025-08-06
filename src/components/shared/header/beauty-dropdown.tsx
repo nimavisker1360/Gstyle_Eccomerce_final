@@ -6,18 +6,42 @@ import Link from "next/link";
 
 const beautyCategories = {
   "مراقبت از پوست": [
+    "محصولات مراقبت از پوست",
     "ست مراقبت پوستی",
     "محصولات ضد پیری",
-    "محصولات پوستی",
     "محصولات آفتاب",
-    "محصولات مراقبت از پوست",
+    "کرم مرطوب کننده",
+    "سرم صورت",
+    "پاک کننده پوست",
+    "تونر و ماسک",
   ],
-  "عطر و بدن": ["عطر و ادکلن", "بادی اسپلش", "محصولات مراقبت از بدن"],
-  "مراقبت از مو": ["محصولات مراقبت مو", "رنگ مو", "شانه و برس", "شامپو"],
+  "مراقبت از مو": [
+    "شامپو",
+    "نرم کننده مو",
+    "ماسک مو",
+    "سرم مو",
+    "روغن مو",
+    "رنگ مو",
+    "محصولات حالت دهی",
+    "شانه و برس",
+  ],
+  "عطر و بدن": [
+    "عطر",
+    "ادکلن",
+    "لوسیون بدن",
+    "محصولات ضد تعریق",
+    "بادی اسپلش",
+    "کرم دست و پا",
+    "محصولات مراقبت از بدن",
+    "دئودرانت",
+  ],
   "سلامت و تغذیه": [
     "انواع ویتامین ها",
-    "انواع مکملهای ورزشی",
-    "انواع دمنوش و ماچا و قهوه",
+    "مکملهای ورزشی",
+    "انواع دمنوش",
+    "شربت و داروهای گیاهی",
+    "محصولات تقویتی",
+    "چای و قهوه",
   ],
 };
 
@@ -56,7 +80,7 @@ export default function BeautyDropdown() {
     >
       {/* Main Beauty Button */}
       <div className="header-button text-blue-700 hover:text-green-600 font-medium transition-colors flex items-center gap-1">
-        آرایش و زیبایی
+        لوازم آرایشی و بهداشتی
         <ChevronDown className="w-4 h-4" />
       </div>
 
@@ -81,7 +105,7 @@ export default function BeautyDropdown() {
                       <Link
                         key={item}
                         href={`/beauty-search?q=${encodeURIComponent(item)}`}
-                        className="text-green-700 font-bold hover:text-blue-700 text-xs py-1 px-2 rounded hover:bg-blue-50 transition-colors cursor-pointer"
+                        className="text-green-700 font-bold hover:text-blue-700 text-xs py-1 px-2 rounded hover:bg-blue-50 transition-colors cursor-pointer block"
                       >
                         <span className="truncate">{item}</span>
                       </Link>

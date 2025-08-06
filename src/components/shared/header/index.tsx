@@ -72,7 +72,7 @@ export default function Header() {
             {data.headerMenus.map((menu) =>
               menu.name === "مد و پوشاک" ? (
                 <FashionDropdown key={menu.href} />
-              ) : menu.name === "آرایش و زیبایی" ? (
+              ) : menu.name === "لوازم آرایشی و بهداشتی" ? (
                 <BeautyDropdown key={menu.href} />
               ) : menu.name === "لوازم ورزشی" ? (
                 <SportsDropdown key={menu.href} />

@@ -153,7 +153,7 @@ export default function SearchProductsLayout({
     const beautyKeywords = [
       "زیبایی",
       "آرایش",
-      "آرایش و زیبایی",
+      "لوازم آرایشی و بهداشتی",
       "زیبایی و آرایش",
       "beauty",
       "cosmetics",

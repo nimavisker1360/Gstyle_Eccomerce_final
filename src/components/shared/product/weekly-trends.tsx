@@ -18,7 +18,7 @@ const weeklyTrends: TrendKeyword[] = [
     keyword: "کرم آفتاب",
     searchQuery: "کرم ضد آفتاب",
     popularity: "high",
-    category: "آرایش و زیبایی",
+    category: "لوازم آرایشی و بهداشتی",
   },
   {
     id: "summer-fashion",
@@ -39,7 +39,7 @@ const weeklyTrends: TrendKeyword[] = [
     keyword: "رژ لب",
     searchQuery: "رژ لب مات",
     popularity: "medium",
-    category: "آرایش و زیبایی",
+    category: "لوازم آرایشی و بهداشتی",
   },
   {
     id: "pet-food",
@@ -74,7 +74,7 @@ const weeklyTrends: TrendKeyword[] = [
     keyword: "عطر مردانه",
     searchQuery: "ادکلن مردانه",
     popularity: "medium",
-    category: "آرایش و زیبایی",
+    category: "لوازم آرایشی و بهداشتی",
   },
   {
     id: "smart-watch",
