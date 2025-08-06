@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Menu, X, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import data from "@/lib/data";
 
 // Categories data for dropdowns
@@ -76,14 +77,32 @@ const beautyCategories = {
 };
 
 const sportsCategories = {
+  "کفش ورزشی": [
+    "کفش دویدن",
+    "کفش پیاده‌روی",
+    "کفش بسکتبال",
+    "کفش فوتبال",
+    "کفش تنیس",
+    "کفش ورزشی زنانه",
+    "کفش ورزشی مردانه",
+  ],
+  "لباس ورزشی": [
+    "تیشرت ورزشی",
+    "شلوار ورزشی",
+    "لباس فیتنس",
+    "لباس یوگا",
+    "لباس دویدن",
+    "لباس ورزشی زنانه",
+    "لباس ورزشی مردانه",
+  ],
   "لوازم ورزشی": [
-    "کفش",
-    "لباس",
-    "اکسسوری",
-    "مایو",
     "ساک ورزشی",
-    "ترموس",
-    "قمقمه",
+    "قمقمه ورزشی",
+    "ترموس ورزشی",
+    "دستکش ورزشی",
+    "تاپ ورزشی",
+    "ساعت ورزشی",
+    "ماشین تناسب اندام",
   ],
 };
 
@@ -118,6 +137,7 @@ const vitaminCategories = {
 export default function MobileCategoriesMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const router = useRouter();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -132,10 +152,49 @@ export default function MobileCategoriesMenu() {
     );
   };
 
+  const handleCategoryClick = (
+    category: string,
+    subCategory: string,
+    categoryType: string
+  ) => {
+    // Navigate to search page with category filter
+    const searchQuery = `${category} ${subCategory}`;
+    let categoryParam = "";
+
+    switch (categoryType) {
+      case "مد و پوشاک":
+        categoryParam = "fashion";
+        break;
+      case "لوازم آرایشی و بهداشتی":
+        categoryParam = "beauty";
+        break;
+      case "لوازم ورزشی":
+        categoryParam = "sports";
+        break;
+      case "الکترونیک":
+        categoryParam = "electronics";
+        break;
+      case "حیوانات خانگی":
+        categoryParam = "pets";
+        break;
+      case "ویتامین و دارو":
+        categoryParam = "vitamin";
+        break;
+      default:
+        categoryParam = "general";
+    }
+
+    router.push(
+      `/search?q=${encodeURIComponent(searchQuery)}&category=${categoryParam}`
+    );
+    setIsOpen(false);
+  };
+
   const renderSubCategories = (categoryName: string, subCategories: any) => {
     const showBlueTitles =
       categoryName === "مد و پوشاک" ||
-      categoryName === "لوازم آرایشی و بهداشتی";
+      categoryName === "لوازم آرایشی و بهداشتی" ||
+      categoryName === "لوازم ورزشی";
 
     return (
       <div className="mt-2 mr-4 space-y-1">
@@ -151,6 +210,9 @@ export default function MobileCategoriesMenu() {
                 <div
                   key={item}
                   className="block text-green-600 hover:text-blue-600 hover:bg-blue-50 text-xs py-1 px-2 rounded cursor-pointer transition-colors duration-200"
+                  onClick={() => {
+                    handleCategoryClick(mainCategory, item, categoryName);
+                  }}
                 >
                   {item}
                 </div>
