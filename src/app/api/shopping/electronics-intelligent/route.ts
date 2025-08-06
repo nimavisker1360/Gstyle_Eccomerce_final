@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getJson } from "serpapi";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { connectToDatabase } from "@/lib/db";
+import GoogleShoppingProduct from "@/lib/db/models/google-shopping-product.model";
 
 // معتبرترین سایت‌های ترکی برای الکترونیک
 const TURKISH_ELECTRONICS_SITES = [
@@ -234,6 +236,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Connect to database
+    await connectToDatabase();
+
     const turkishQuery = await translatePersianToTurkish(query);
     console.log(`✅ Persian to Turkish: "${query}" → "${turkishQuery}"`);
 
@@ -277,6 +282,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Remove duplicates
     const uniqueProducts = allProducts.filter(
       (product, index, self) =>
         index ===
@@ -287,20 +293,30 @@ export async function GET(request: NextRequest) {
         )
     );
 
+    console.log(
+      `📊 Total unique electronics products found: ${uniqueProducts.length}`
+    );
+
     if (uniqueProducts.length === 0) {
       return NextResponse.json({
         products: [],
-        message: "هیچ محصول الکترونیک از سایت‌های معتبر ترکی یافت نشد.",
+        message:
+          "هیچ محصول الکترونیک از سایت‌های معتبر ترکی یافت نشد. لطفاً کلمات کلیدی دیگری امتحان کنید.",
         search_query: query,
         turkish_query: turkishQuery,
         enhanced_queries: enhancedQueries,
       });
     }
 
-    const translatedProductsPromises = uniqueProducts
-      .slice(0, 35)
-      .map(async (product: any, index: number) => {
+    // Step 4: Translate products to Persian and save to database
+    console.log(
+      "🔄 Step 4: Translating products to Persian and saving to database..."
+    );
+    const translatedProductsPromises = uniqueProducts.map(
+      async (product, index) => {
         try {
+          console.log(`🔄 Translating product ${index + 1}: ${product.title}`);
+
           const { title: persianTitle, description: persianDescription } =
             await translateTurkishToPersian(
               product.title,
@@ -308,6 +324,7 @@ export async function GET(request: NextRequest) {
             );
 
           let finalPrice = 0;
+          let finalOriginalPrice = null;
           let currency = "TRY";
 
           if (product.extracted_price) {
@@ -322,6 +339,17 @@ export async function GET(request: NextRequest) {
               0;
           }
 
+          if (product.original_price) {
+            const originalPriceStr =
+              typeof product.original_price === "string"
+                ? product.original_price
+                : product.original_price.toString();
+            finalOriginalPrice =
+              parseFloat(
+                originalPriceStr.replace(/[^\d.,]/g, "").replace(",", ".")
+              ) || null;
+          }
+
           if (product.currency) {
             currency = product.currency;
           } else if (product.price && typeof product.price === "string") {
@@ -330,24 +358,60 @@ export async function GET(request: NextRequest) {
             else if (product.price.includes("$")) currency = "USD";
           }
 
+          const storeLink =
+            product.link || product.source_link || product.merchant?.link || "";
+
+          let googleShoppingLink = "";
+          if (product.product_id) {
+            googleShoppingLink = `https://www.google.com.tr/shopping/product/${product.product_id}?gl=tr`;
+          } else if (product.product_link) {
+            googleShoppingLink = product.product_link;
+          } else {
+            googleShoppingLink = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product.title)}`;
+          }
+
+          console.log(`✅ Successfully translated: ${persianTitle}`);
+
+          // Create product data for database
+          const productData = {
+            id:
+              product.product_id ||
+              `electronics_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: product.title,
+            title_fa: persianTitle,
+            price: finalPrice.toString(),
+            link: storeLink,
+            thumbnail: product.thumbnail || product.image,
+            source: product.source || "فروشگاه ترکی",
+            category: "electronics",
+            createdAt: new Date(),
+          };
+
+          // Save to MongoDB
+          try {
+            const savedProduct = new GoogleShoppingProduct(productData);
+            await savedProduct.save();
+            console.log(`💾 Saved to database: ${persianTitle}`);
+          } catch (dbError) {
+            console.error(
+              `❌ Database save error for ${persianTitle}:`,
+              dbError
+            );
+            // Continue even if database save fails
+          }
+
           return {
             id: product.product_id || Math.random().toString(36).substr(2, 9),
             title: persianTitle,
             originalTitle: product.title,
             price: finalPrice,
-            originalPrice: product.original_price || null,
+            originalPrice: finalOriginalPrice,
             currency: currency,
             image: product.thumbnail,
             description: persianDescription,
             originalDescription: product.snippet || "",
-            link:
-              product.link ||
-              product.source_link ||
-              product.merchant?.link ||
-              "",
-            googleShoppingLink: product.product_id
-              ? `https://www.google.com.tr/shopping/product/${product.product_id}?gl=tr`
-              : `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product.title)}`,
+            link: storeLink,
+            googleShoppingLink: googleShoppingLink,
             source: product.source || "فروشگاه ترکی",
             rating: product.rating || 0,
             reviews: product.reviews || 0,
@@ -356,14 +420,17 @@ export async function GET(request: NextRequest) {
             turkishKeywords: enhancedQueries,
           };
         } catch (error) {
-          console.error(`❌ Error processing product:`, error);
+          console.error(`❌ Error translating product ${index + 1}:`, error);
           return null;
         }
-      });
+      }
+    );
 
     const finalProducts = (
       await Promise.all(translatedProductsPromises)
     ).filter(Boolean);
+
+    console.log(`✅ Final electronics products ready: ${finalProducts.length}`);
 
     return NextResponse.json({
       products: finalProducts,
@@ -375,10 +442,10 @@ export async function GET(request: NextRequest) {
       turkish_sites_searched: TURKISH_ELECTRONICS_SITES.slice(0, 10),
     });
   } catch (error) {
-    console.error("❌ Electronics API Error:", error);
+    console.error("❌ Intelligent Electronics Search API Error:", error);
     return NextResponse.json(
       {
-        error: "خطا در جستجوی هوشمند الکترونیک.",
+        error: "خطا در جستجوی هوشمند الکترونیک. لطفاً دوباره تلاش کنید.",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

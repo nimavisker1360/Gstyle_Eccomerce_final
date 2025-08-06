@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getJson } from "serpapi";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { connectToDatabase } from "@/lib/db";
+import GoogleShoppingProduct from "@/lib/db/models/google-shopping-product.model";
 
 // معتبرترین سایت‌های ترکی برای زیبایی و آرایش
 const TURKISH_BEAUTY_SITES = [
@@ -258,6 +260,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Connect to database
+    await connectToDatabase();
+
     // Add randomization for diverse results
     let cleanQuery = query.replace(/\s+\d{13}$/, "").trim();
 
@@ -303,10 +308,10 @@ export async function GET(request: NextRequest) {
           engine: "google_shopping",
           q:
             enhancedQuery +
-            " site:sephora.com.tr OR site:gratis.com OR site:douglas.com.tr OR site:trendyol.com OR site:hepsiburada.com",
+            " site:sephora.com.tr OR site:hepsiburada.com OR site:trendyol.com OR site:glamour.com.tr",
           gl: "tr",
           hl: "tr",
-          num: 40,
+          num: 50,
           device: "desktop",
           api_key: process.env.SERPAPI_KEY,
         };
@@ -352,18 +357,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         products: [],
         message:
-          "هیچ محصول زیبایی از سایت‌های معتبر ترکی یافت نشد. لطفاً کلمات کلیدی دیگری امتحان کنید.",
+          "هیچ محصول زیبایی و آرایش از سایت‌های معتبر ترکی یافت نشد. لطفاً کلمات کلیدی دیگری امتحان کنید.",
         search_query: query,
         turkish_query: turkishQuery,
         enhanced_queries: enhancedQueries,
       });
     }
 
-    // Step 4: Translate Turkish products back to Persian
-    console.log("🔄 Step 4: Translating Turkish beauty products to Persian...");
-    const translatedProductsPromises = uniqueProducts
-      .slice(0, 35)
-      .map(async (product: any, index: number) => {
+    // Step 4: Translate products to Persian and save to database
+    console.log(
+      "🔄 Step 4: Translating products to Persian and saving to database..."
+    );
+    const translatedProductsPromises = uniqueProducts.map(
+      async (product, index) => {
         try {
           console.log(`🔄 Translating product ${index + 1}: ${product.title}`);
 
@@ -373,7 +379,6 @@ export async function GET(request: NextRequest) {
               product.snippet || ""
             );
 
-          // Extract price information
           let finalPrice = 0;
           let finalOriginalPrice = null;
           let currency = "TRY";
@@ -423,6 +428,34 @@ export async function GET(request: NextRequest) {
 
           console.log(`✅ Successfully translated: ${persianTitle}`);
 
+          // Create product data for database
+          const productData = {
+            id:
+              product.product_id ||
+              `beauty_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: product.title,
+            title_fa: persianTitle,
+            price: finalPrice.toString(),
+            link: storeLink,
+            thumbnail: product.thumbnail || product.image,
+            source: product.source || "فروشگاه ترکی",
+            category: "beauty",
+            createdAt: new Date(),
+          };
+
+          // Save to MongoDB
+          try {
+            const savedProduct = new GoogleShoppingProduct(productData);
+            await savedProduct.save();
+            console.log(`💾 Saved to database: ${persianTitle}`);
+          } catch (dbError) {
+            console.error(
+              `❌ Database save error for ${persianTitle}:`,
+              dbError
+            );
+            // Continue even if database save fails
+          }
+
           return {
             id: product.product_id || Math.random().toString(36).substr(2, 9),
             title: persianTitle,
@@ -446,7 +479,8 @@ export async function GET(request: NextRequest) {
           console.error(`❌ Error translating product ${index + 1}:`, error);
           return null;
         }
-      });
+      }
+    );
 
     const finalProducts = (
       await Promise.all(translatedProductsPromises)

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getJson } from "serpapi";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { connectToDatabase } from "@/lib/db";
+import GoogleShoppingProduct from "@/lib/db/models/google-shopping-product.model";
 
 interface SportProduct {
   id: string;
@@ -276,6 +278,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Connect to database
+    await connectToDatabase();
+
     // Add randomization for diverse results
     let cleanQuery = query.replace(/\s+\d{13}$/, "").trim();
 
@@ -316,16 +321,15 @@ export async function GET(request: NextRequest) {
     let allProducts: any[] = [];
 
     for (const enhancedQuery of enhancedQueries.slice(0, 3)) {
-      // Use top 3 queries
       try {
         const serpApiParams = {
           engine: "google_shopping",
           q:
             enhancedQuery +
-            " site:hepsiburada.com OR site:trendyol.com OR site:n11.com OR site:decathlon.com.tr OR site:intersport.com.tr",
-          gl: "tr", // Turkey
-          hl: "tr", // Turkish language
-          num: 40,
+            " site:decathlon.com.tr OR site:hepsiburada.com OR site:trendyol.com OR site:nike.com.tr OR site:adidas.com.tr",
+          gl: "tr",
+          hl: "tr",
+          num: 50,
           device: "desktop",
           api_key: process.env.SERPAPI_KEY,
         };
@@ -346,14 +350,13 @@ export async function GET(request: NextRequest) {
           allProducts.push(...filteredProducts);
         }
 
-        // Small delay between requests
         await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (error) {
         console.error(`❌ Search error for query "${enhancedQuery}":`, error);
       }
     }
 
-    // Remove duplicates based on product_id or title
+    // Remove duplicates
     const uniqueProducts = allProducts.filter(
       (product, index, self) =>
         index ===
@@ -364,7 +367,9 @@ export async function GET(request: NextRequest) {
         )
     );
 
-    console.log(`📊 Total unique products found: ${uniqueProducts.length}`);
+    console.log(
+      `📊 Total unique sports products found: ${uniqueProducts.length}`
+    );
 
     if (uniqueProducts.length === 0) {
       return NextResponse.json({
@@ -377,22 +382,21 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Step 4: Translate Turkish products back to Persian
-    console.log("🔄 Step 4: Translating Turkish products to Persian...");
-    const translatedProductsPromises = uniqueProducts
-      .slice(0, 30)
-      .map(async (product: any, index: number) => {
+    // Step 4: Translate products to Persian and save to database
+    console.log(
+      "🔄 Step 4: Translating products to Persian and saving to database..."
+    );
+    const translatedProductsPromises = uniqueProducts.map(
+      async (product, index) => {
         try {
           console.log(`🔄 Translating product ${index + 1}: ${product.title}`);
 
-          // Translate title and description
           const { title: persianTitle, description: persianDescription } =
             await translateTurkishToPersian(
               product.title,
               product.snippet || ""
             );
 
-          // Extract price information
           let finalPrice = 0;
           let finalOriginalPrice = null;
           let currency = "TRY";
@@ -428,11 +432,9 @@ export async function GET(request: NextRequest) {
             else if (product.price.includes("$")) currency = "USD";
           }
 
-          // Extract store link
           const storeLink =
             product.link || product.source_link || product.merchant?.link || "";
 
-          // Create Google Shopping link
           let googleShoppingLink = "";
           if (product.product_id) {
             googleShoppingLink = `https://www.google.com.tr/shopping/product/${product.product_id}?gl=tr`;
@@ -443,6 +445,34 @@ export async function GET(request: NextRequest) {
           }
 
           console.log(`✅ Successfully translated: ${persianTitle}`);
+
+          // Create product data for database
+          const productData = {
+            id:
+              product.product_id ||
+              `sports_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: product.title,
+            title_fa: persianTitle,
+            price: finalPrice.toString(),
+            link: storeLink,
+            thumbnail: product.thumbnail || product.image,
+            source: product.source || "فروشگاه ترکی",
+            category: "sports",
+            createdAt: new Date(),
+          };
+
+          // Save to MongoDB
+          try {
+            const savedProduct = new GoogleShoppingProduct(productData);
+            await savedProduct.save();
+            console.log(`💾 Saved to database: ${persianTitle}`);
+          } catch (dbError) {
+            console.error(
+              `❌ Database save error for ${persianTitle}:`,
+              dbError
+            );
+            // Continue even if database save fails
+          }
 
           return {
             id: product.product_id || Math.random().toString(36).substr(2, 9),
@@ -467,7 +497,8 @@ export async function GET(request: NextRequest) {
           console.error(`❌ Error translating product ${index + 1}:`, error);
           return null;
         }
-      });
+      }
+    );
 
     const finalProducts = (
       await Promise.all(translatedProductsPromises)
@@ -488,7 +519,7 @@ export async function GET(request: NextRequest) {
     console.error("❌ Intelligent Sports Search API Error:", error);
     return NextResponse.json(
       {
-        error: "خطا در جستجوی هوشمند محصولات ورزشی. لطفاً دوباره تلاش کنید.",
+        error: "خطا در جستجوی هوشمند ورزشی. لطفاً دوباره تلاش کنید.",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

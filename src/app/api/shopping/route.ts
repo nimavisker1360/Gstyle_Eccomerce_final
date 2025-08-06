@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getJson } from "serpapi";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { connectToDatabase } from "@/lib/db";
+import GoogleShoppingProduct from "@/lib/db/models/google-shopping-product.model";
 
 // Simple in-memory cache for search results
 const searchCache = new Map<
@@ -193,6 +195,9 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Connect to database
+    await connectToDatabase();
 
     // Add randomization to search results by modifying query slightly
     // Remove timestamp if present to clean the query
@@ -678,80 +683,51 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ترجمه عنوان و توضیحات محصولات با OpenAI
-    const enhancedProductsPromises = filteredResults.map(
+    // Step 4: Translate products to Persian and save to database
+    console.log(
+      "🔄 Step 4: Translating products to Persian and saving to database..."
+    );
+    const translatedProductsPromises = filteredResults.map(
       async (product: any, index: number) => {
-        console.log(`🔄 Processing product ${index + 1}: ${product.title}`);
-
         try {
-          let persianTitle = product.title;
-          let persianDescription =
-            product.snippet || "توضیحات این محصول در دسترس نیست.";
+          console.log(`🔄 Translating product ${index + 1}: ${product.title}`);
 
-          // Only translate if OpenAI is available
-          if (process.env.OPENAI_API_KEY) {
-            try {
-              const translationPrompt = `
-                لطفاً عنوان و توضیحات این محصول را به فارسی ترجمه کنید:
+          // ترجمه عنوان و توضیحات به فارسی
+          const translationResult = await generateText({
+            model: openai("gpt-3.5-turbo"),
+            prompt: `Translate the following product title and description to Persian (Farsi). 
+          Return only the Persian translation, nothing else. 
+          Make it a coherent sentence of 5-10 words, not word-for-word literal translation.
+          
+          Product title: "${product.title}"
+          Product description: "${product.snippet || ""}"
+          
+          Persian translation:`,
+            maxOutputTokens: 150,
+          });
 
-                عنوان: ${product.title}
-                توضیحات: ${product.snippet || "بدون توضیحات"}
+          const persianTitle = translationResult.text.trim();
 
-                پاسخ را در این فرمت JSON بدهید:
-                {
-                  "title": "عنوان فارسی",
-                  "description": "توضیحات فارسی (حداکثر 100 کلمه، جذاب و مناسب فروش)"
-                }
-              `;
+          // ترجمه جداگانه توضیحات
+          const descriptionTranslationResult = await generateText({
+            model: openai("gpt-3.5-turbo"),
+            prompt: `Translate the following product description to Persian (Farsi). 
+          Return only the Persian translation, nothing else. 
+          Make it natural and readable.
+          
+          Product description: "${product.snippet || ""}"
+          
+          Persian translation:`,
+            maxOutputTokens: 200,
+          });
 
-              const { text: response } = await generateText({
-                model: openai("gpt-3.5-turbo"),
-                prompt: translationPrompt,
-                maxOutputTokens: 200,
-                temperature: 0.5,
-              });
+          const persianDescription = descriptionTranslationResult.text.trim();
 
-              try {
-                if (response) {
-                  // تلاش برای پارس JSON
-                  const parsed = JSON.parse(response);
-                  persianTitle = parsed.title || product.title;
-                  persianDescription = parsed.description || persianDescription;
-                }
-              } catch (parseError) {
-                // اگر JSON پارس نشد، از متن خام استفاده کن
-                if (response && response.length > 20) {
-                  persianDescription = response;
-                }
-              }
-            } catch (translationError) {
-              console.error(
-                `❌ Translation error for product ${index + 1}:`,
-                translationError
-              );
-              // Continue with original title/description
-            }
-          }
-
-          // ساخت لینک Google Shopping از product_id یا link
-          let googleShoppingLink = "";
-          if (product.product_id) {
-            // استفاده از product_id برای لینک دقیق Google Shopping
-            googleShoppingLink = `https://www.google.com.tr/shopping/product/${product.product_id}?gl=tr`;
-          } else if (product.product_link) {
-            // اگر product_link موجود است
-            googleShoppingLink = product.product_link;
-          } else {
-            // fallback برای جستجوی عمومی
-            googleShoppingLink = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product.title)}`;
-          }
-
-          // استخراج قیمت دقیق از فیلدهای مختلف SerpAPI
+          // استخراج قیمت
           let finalPrice = 0;
           let finalOriginalPrice = null;
           let currency = "TRY";
 
-          // تلاش برای یافتن قیمت از فیلدهای مختلف
           if (product.extracted_price) {
             finalPrice = product.extracted_price;
           } else if (product.price) {
@@ -764,7 +740,6 @@ export async function GET(request: NextRequest) {
               0;
           }
 
-          // قیمت اصلی (قبل از تخفیف)
           if (product.original_price) {
             const originalPriceStr =
               typeof product.original_price === "string"
@@ -796,7 +771,44 @@ export async function GET(request: NextRequest) {
             return null;
           }
 
+          let googleShoppingLink = "";
+          if (product.product_id) {
+            googleShoppingLink = `https://www.google.com.tr/shopping/product/${product.product_id}?gl=tr`;
+          } else if (product.product_link) {
+            googleShoppingLink = product.product_link;
+          } else {
+            googleShoppingLink = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product.title)}`;
+          }
+
           console.log(`✅ Successfully processed product: ${persianTitle}`);
+
+          // Create product data for database
+          const productData = {
+            id:
+              product.product_id ||
+              `general_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: product.title,
+            title_fa: persianTitle,
+            price: finalPrice.toString(),
+            link: storeLink,
+            thumbnail: product.thumbnail || product.image,
+            source: product.source || "فروشگاه آنلاین",
+            category: queryType,
+            createdAt: new Date(),
+          };
+
+          // Save to MongoDB
+          try {
+            const savedProduct = new GoogleShoppingProduct(productData);
+            await savedProduct.save();
+            console.log(`💾 Saved to database: ${persianTitle}`);
+          } catch (dbError) {
+            console.error(
+              `❌ Database save error for ${persianTitle}:`,
+              dbError
+            );
+            // Continue even if database save fails
+          }
 
           return {
             id: product.product_id || Math.random().toString(36).substr(2, 9),
@@ -902,7 +914,7 @@ export async function GET(request: NextRequest) {
 
     // فیلتر کردن null values و اجرای Promise.all
     const enhancedProducts = (
-      await Promise.all(enhancedProductsPromises)
+      await Promise.all(translatedProductsPromises)
     ).filter(Boolean);
 
     console.log(`✅ Final processed products: ${enhancedProducts.length}`);
