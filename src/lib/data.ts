@@ -1088,10 +1088,6 @@ const data: Data = {
       name: "ویتامین و دارو",
       href: "/search?category=ویتامین و دارو",
     },
-    {
-      name: "گوگل شاپینگ",
-      href: "/google-shopping",
-    },
   ],
   carousels: [
     {

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import Link from "next/link";
 
 const fashionCategories = {
   زنانه: [
@@ -113,13 +112,12 @@ export default function FashionDropdown() {
                   </h3>
                   <div className="grid grid-cols-2 gap-1">
                     {subCategories.map((item) => (
-                      <Link
+                      <span
                         key={item}
-                        href={`/fashion-search?q=${encodeURIComponent(item)}`}
                         className="text-green-700 font-bold hover:text-blue-700 text-xs py-1 px-2 rounded hover:bg-blue-50 transition-colors cursor-pointer"
                       >
                         <span className="truncate">{item}</span>
-                      </Link>
+                      </span>
                     ))}
                   </div>
                 </div>

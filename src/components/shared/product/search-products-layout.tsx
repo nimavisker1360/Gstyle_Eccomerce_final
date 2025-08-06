@@ -49,6 +49,17 @@ export default function SearchProductsLayout({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  // Function to clear all search cache
+  const clearSearchCache = () => {
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      if (key.startsWith("search:")) {
+        localStorage.removeItem(key);
+      }
+    });
+    console.log("🗑️ Cleared all search cache");
+  };
+
   // تشخیص کوئری‌های مربوط به مد و پوشاک
   const isFashionQuery = (query: string) => {
     const fashionKeywords = [
@@ -246,116 +257,208 @@ export default function SearchProductsLayout({
     return query.length > 20 ? query.substring(0, 20) + "..." : query;
   };
 
-  const handleSearch = useCallback(async (query: string) => {
-    if (!query.trim()) return;
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) return;
 
-    setLoading(true);
-    setError("");
-    setMessage("");
-    setCurrentSearch(query);
-
-    try {
-      console.log(`🔍 Searching for: "${query}"`);
-
-      // Check client-side cache first for regular searches
-      const cacheKey = `search:${query.toLowerCase().trim()}:${brandFilter || "none"}:${typeFilter || "none"}`;
-      const cacheExpiry = 3 * 60 * 1000; // 3 minutes for search results
-      const cached = localStorage.getItem(cacheKey);
-      const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
-
-      if (cached && cacheTimestamp && !brandFilter) {
-        const now = Date.now();
-        const timestamp = parseInt(cacheTimestamp);
-
-        if (now - timestamp < cacheExpiry) {
-          console.log("✅ Using cached search results from localStorage");
-          const cachedData = JSON.parse(cached);
-          setProducts(cachedData.products || []);
-          setMessage(cachedData.message || "");
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Check if this is a Turkish brand search
-      if (brandFilter && typeFilter === "turkish") {
-        console.log(`🇹🇷 Turkish brand search for: ${brandFilter}`);
-
-        const response = await fetch(
-          `/api/shopping/turkish-brands?brand=${encodeURIComponent(brandFilter)}&type=turkish`
-        );
-        const data = await response.json();
-
-        console.log(`📊 Turkish brand search response:`, {
-          status: response.status,
-          productsCount: data.products?.length || 0,
-          message: data.message,
-          error: data.error,
-        });
-
-        if (!response.ok) {
-          throw new Error(data.error || "خطا در دریافت محصولات برند ترکیه");
-        }
-
-        setProducts(data.products || []);
-        setMessage(data.message || `محصولات برند ${brandFilter}`);
-      } else {
-        // Regular search
-        const response = await fetch(
-          `/api/shopping?q=${encodeURIComponent(query)}`
-        );
-        const data = await response.json();
-
-        console.log(`📊 Search response:`, {
-          status: response.status,
-          productsCount: data.products?.length || 0,
-          message: data.message,
-          error: data.error,
-        });
-
-        if (!response.ok) {
-          throw new Error(data.error || "خطا در دریافت اطلاعات");
-        }
-
-        setProducts(data.products || []);
-        setMessage(data.message || "");
-
-        // Cache successful search results (only for regular searches, not filtered)
-        if (!brandFilter && !typeFilter && data.products) {
-          const cacheData = {
-            products: data.products,
-            message: data.message || "",
-          };
-          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-          localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
-        }
-
-        // Log search results for debugging
-        if (data.products && data.products.length > 0) {
-          const isQueryFashion = isFashionQuery(query);
-          console.log(`✅ Found ${data.products.length} products`);
-          console.log(`🎯 Fashion query: ${isQueryFashion ? "Yes" : "No"}`);
-          console.log(
-            `📊 Will display: ${isQueryFashion ? data.products.length : Math.min(50, data.products.length)} products`
-          );
-          data.products.forEach((product: ShoppingProduct, index: number) => {
-            console.log(
-              `📦 Product ${index + 1}: ${product.title} - ${product.price} ${product.currency}`
-            );
-          });
-        } else {
-          console.log(`❌ No products found for query: "${query}"`);
-        }
-      }
-    } catch (err) {
-      console.error("❌ Search error:", err);
-      setError("خطا در دریافت محصولات. لطفاً دوباره تلاش کنید.");
-      setProducts([]);
+      setLoading(true);
+      setError("");
       setMessage("");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      setCurrentSearch(query);
+
+      try {
+        console.log(`🔍 Searching for: "${query}"`);
+
+        // Check client-side cache first for regular searches
+        // Create a more specific cache key that includes the exact query
+        const cacheKey = `search:${encodeURIComponent(query.trim())}:${brandFilter || "none"}:${typeFilter || "none"}`;
+        const cacheExpiry = 2 * 60 * 1000; // Reduced to 2 minutes for more responsive updates
+        const cached = localStorage.getItem(cacheKey);
+        const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+
+        if (cached && cacheTimestamp && !brandFilter) {
+          const now = Date.now();
+          const timestamp = parseInt(cacheTimestamp);
+
+          if (now - timestamp < cacheExpiry) {
+            try {
+              const cachedData = JSON.parse(cached);
+              // Verify that the cached data is for the same query
+              if (cachedData.query === query) {
+                console.log(`✅ Using cached search results for: "${query}"`);
+                setProducts(cachedData.products || []);
+                setMessage(cachedData.message || "");
+                setLoading(false);
+                return;
+              } else {
+                console.log(
+                  `🔄 Cache mismatch, query changed from "${cachedData.query}" to "${query}"`
+                );
+                // Clear the mismatched cache
+                localStorage.removeItem(cacheKey);
+                localStorage.removeItem(`${cacheKey}_timestamp`);
+              }
+            } catch (parseError) {
+              console.error("❌ Error parsing cached data:", parseError);
+              // Clear corrupted cache
+              localStorage.removeItem(cacheKey);
+              localStorage.removeItem(`${cacheKey}_timestamp`);
+            }
+          } else {
+            // Clear expired cache
+            localStorage.removeItem(cacheKey);
+            localStorage.removeItem(`${cacheKey}_timestamp`);
+            console.log(`🗑️ Cleared expired cache for: "${query}"`);
+          }
+        }
+
+        // Check if this is a Turkish brand search
+        if (brandFilter && typeFilter === "turkish") {
+          console.log(`🇹🇷 Turkish brand search for: ${brandFilter}`);
+
+          const response = await fetch(
+            `/api/shopping/turkish-brands?brand=${encodeURIComponent(brandFilter)}&type=turkish`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              // Add timeout
+              signal: AbortSignal.timeout(30000), // 30 second timeout
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response
+              .json()
+              .catch(() => ({ error: "خطا در دریافت محصولات برند ترکیه" }));
+            throw new Error(
+              errorData.error ||
+                `خطا در دریافت محصولات برند ترکیه (${response.status})`
+            );
+          }
+
+          const data = await response.json();
+
+          console.log(`📊 Turkish brand search response:`, {
+            status: response.status,
+            productsCount: data.products?.length || 0,
+            message: data.message,
+            error: data.error,
+          });
+
+          setProducts(data.products || []);
+          setMessage(data.message || `محصولات برند ${brandFilter}`);
+        } else {
+          // Regular search
+          console.log(
+            `🔍 Making API request to /api/shopping?q=${encodeURIComponent(query)}`
+          );
+
+          const response = await fetch(
+            `/api/shopping?q=${encodeURIComponent(query)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              // Add timeout
+              signal: AbortSignal.timeout(30000), // 30 second timeout
+            }
+          );
+
+          console.log(`📊 Response status: ${response.status}`);
+
+          if (!response.ok) {
+            const errorData = await response
+              .json()
+              .catch(() => ({ error: "خطا در دریافت اطلاعات" }));
+            console.error(`❌ API Error (${response.status}):`, errorData);
+            throw new Error(
+              errorData.error || `خطا در دریافت اطلاعات (${response.status})`
+            );
+          }
+
+          const data = await response.json();
+
+          console.log(`📊 Search response:`, {
+            status: response.status,
+            productsCount: data.products?.length || 0,
+            message: data.message,
+            error: data.error,
+          });
+
+          setProducts(data.products || []);
+          setMessage(data.message || "");
+
+          // Show special message for sample data
+          if (data.sample_data) {
+            setMessage(
+              "محصولات نمونه نمایش داده می‌شوند. برای نتایج واقعی، لطفاً API keys را تنظیم کنید."
+            );
+          }
+
+          // Cache successful search results (only for regular searches, not filtered)
+          if (!brandFilter && !typeFilter && data.products) {
+            const cacheData = {
+              query: query, // Store the original query
+              products: data.products,
+              message: data.message || "",
+              timestamp: Date.now(),
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+            localStorage.setItem(
+              `${cacheKey}_timestamp`,
+              Date.now().toString()
+            );
+            console.log(
+              `💾 Cached search results for: "${query}" (${data.products.length} products)`
+            );
+          }
+
+          // Log search results for debugging
+          if (data.products && data.products.length > 0) {
+            const isQueryFashion = isFashionQuery(query);
+            console.log(`✅ Found ${data.products.length} products`);
+            console.log(`🎯 Fashion query: ${isQueryFashion ? "Yes" : "No"}`);
+            console.log(
+              `📊 Will display: ${isQueryFashion ? data.products.length : Math.min(50, data.products.length)} products`
+            );
+            data.products.forEach((product: ShoppingProduct, index: number) => {
+              console.log(
+                `📦 Product ${index + 1}: ${product.title} - ${product.price} ${product.currency}`
+              );
+            });
+          } else {
+            console.log(`❌ No products found for query: "${query}"`);
+          }
+        }
+      } catch (err) {
+        console.error("❌ Search error:", err);
+
+        // Handle different types of errors
+        let errorMessage = "خطا در جستجوی محصولات. لطفاً دوباره تلاش کنید.";
+
+        if (err instanceof Error) {
+          if (err.name === "AbortError" || err.message.includes("timeout")) {
+            errorMessage = "زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید.";
+          } else if (err.message.includes("Failed to fetch")) {
+            errorMessage =
+              "خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.";
+          } else {
+            errorMessage = err.message;
+          }
+        }
+
+        setError(errorMessage);
+        setProducts([]);
+        setMessage("");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [brandFilter, typeFilter]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -366,6 +469,10 @@ export default function SearchProductsLayout({
   useEffect(() => {
     if (initialQuery && initialQuery.trim()) {
       console.log(`🚀 Initial search for: "${initialQuery}"`);
+      // Clear cache when initial query changes to ensure fresh results
+      if (currentSearch !== initialQuery) {
+        clearSearchCache();
+      }
       handleSearch(initialQuery);
     }
   }, [initialQuery, handleSearch, brandFilter, typeFilter]);
@@ -448,6 +555,17 @@ export default function SearchProductsLayout({
               <Search className="w-4 h-4" />
             )}
           </Button>
+          {/* Debug button to clear cache */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearSearchCache}
+            title="Clear search cache"
+            className="text-xs"
+          >
+            🗑️
+          </Button>
         </form>
       </div>
     );
@@ -493,7 +611,30 @@ export default function SearchProductsLayout({
 
     return (
       <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">
-        {message}
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <svg
+              className="h-5 w-5 text-blue-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="mr-3">
+            <p className="text-sm">{message}</p>
+            {message.includes("نمونه") && (
+              <p className="text-xs mt-1 text-blue-600">
+                برای تنظیم API keys، فایل .env.local را ایجاد کرده و SERPAPI_KEY
+                و OPENAI_API_KEY را اضافه کنید.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     );
   };

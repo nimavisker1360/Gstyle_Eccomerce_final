@@ -83,13 +83,12 @@ export default function Header() {
               ) : menu.name === "ویتامین و دارو" ? (
                 <VitaminDropdown key={menu.href} />
               ) : (
-                <Link
+                <span
                   key={menu.href}
-                  href={menu.href}
-                  className="header-button text-blue-700 hover:text-green-600 font-medium transition-colors"
+                  className="text-blue-700 hover:text-green-600 font-medium transition-colors cursor-pointer"
                 >
                   {menu.name}
-                </Link>
+                </span>
               )
             )}
           </div>

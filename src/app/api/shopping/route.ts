@@ -18,6 +18,142 @@ const searchCache = new Map<
 // Cache duration: 5 minutes for searches
 const SEARCH_CACHE_TTL = 5 * 60 * 1000;
 
+// Function to determine query type based on keywords
+function getQueryType(query: string): string {
+  // حیوانات خانگی - بررسی اول برای اولویت بالاتر
+  const petsKeywords = [
+    "حیوانات خانگی",
+    "حیوانات",
+    "pets",
+    "سگ",
+    "dog",
+    "گربه",
+    "cat",
+    "حیوان خانگی",
+    "pet",
+    "غذای سگ",
+    "غذای گربه",
+    "تشویقی سگ",
+    "تشویقی گربه",
+    "قلاده",
+    "محصولات بهداشتی حیوانات",
+  ];
+
+  // ورزشی - بررسی دوم
+  const sportsKeywords = [
+    "ورزشی",
+    "sport",
+    "sports",
+    "ورزش",
+    "فیتنس",
+    "fitness",
+    "دویدن",
+    "running",
+    "ساک ورزشی",
+    "لوازم ورزشی",
+    "کفش ورزشی",
+    "لباس ورزشی",
+    "ترموس",
+    "قمقمه",
+    "اسباب ورزشی",
+  ];
+
+  // ویتامین و دارو
+  const vitaminKeywords = [
+    "ویتامین",
+    "vitamin",
+    "دارو",
+    "medicine",
+    "مکمل",
+    "supplement",
+    "مولتی ویتامین",
+    "کلسیم",
+    "ملاتونین",
+  ];
+
+  // زیبایی و آرایش
+  const beautyKeywords = [
+    "زیبایی",
+    "آرایش",
+    "beauty",
+    "cosmetics",
+    "makeup",
+    "perfume",
+    "cologne",
+    "لوازم آرایشی",
+    "عطر",
+    "ادکلن",
+    "مراقبت از پوست",
+    "ضد پیری",
+    "محصولات آفتاب",
+    "رنگ مو",
+    "شامپو",
+  ];
+
+  // الکترونیک
+  const electronicsKeywords = [
+    "الکترونیک",
+    "electronics",
+    "موبایل",
+    "mobile",
+    "لپ تاپ",
+    "laptop",
+    "تبلت",
+    "tablet",
+    "هدفون",
+    "headphone",
+    "ساعت هوشمند",
+    "smartwatch",
+  ];
+
+  // مد و پوشاک - بررسی آخر برای جلوگیری از تداخل
+  const fashionKeywords = [
+    "مد",
+    "پوشاک",
+    "fashion",
+    "clothing",
+    "dress",
+    "shirt",
+    "pants",
+    "jeans",
+    "skirt",
+    "blouse",
+    "t-shirt",
+    "sweater",
+    "jacket",
+    "coat",
+    "پیراهن",
+    "تاپ",
+    "شلوار",
+    "شومیز",
+    "دامن",
+    "ژاکت",
+    "کت",
+    "کیف",
+    "کیف دستی",
+    "jewelry",
+    "جواهرات",
+    "زیورآلات",
+  ];
+
+  // تشخیص نوع کوئری با اولویت‌بندی
+  if (petsKeywords.some((keyword) => query.includes(keyword))) {
+    return "pets";
+  } else if (sportsKeywords.some((keyword) => query.includes(keyword))) {
+    return "sports";
+  } else if (vitaminKeywords.some((keyword) => query.includes(keyword))) {
+    return "vitamins";
+  } else if (beautyKeywords.some((keyword) => query.includes(keyword))) {
+    return "beauty";
+  } else if (electronicsKeywords.some((keyword) => query.includes(keyword))) {
+    return "electronics";
+  } else if (fashionKeywords.some((keyword) => query.includes(keyword))) {
+    return "fashion";
+  }
+
+  return "other";
+}
+
 // Function to extract and validate product links from SERP API
 function extractProductLink(product: any): string | null {
   // List of valid store domains we want to accept
@@ -172,17 +308,58 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check cache first
-    const cacheKey = `search:${query.toLowerCase().trim()}`;
-    const now = Date.now();
-    const cachedResult = searchCache.get(cacheKey);
+    // Check database cache first - use the exact query for cache key
+    let queryType = getQueryType(query.toLowerCase());
+    let hasCachedProducts = false;
 
-    if (cachedResult && now - cachedResult.timestamp < cachedResult.ttl) {
-      console.log(`✅ Returning cached search results for: "${query}"`);
-      return NextResponse.json({
-        ...cachedResult.data,
-        cached: true,
-      });
+    // Create a more specific cache key that includes the exact query
+    const cacheKey = `${queryType}_${encodeURIComponent(query.trim())}`;
+    console.log(`🔍 Cache key: "${cacheKey}"`);
+
+    try {
+      hasCachedProducts = await GoogleShoppingProduct.hasEnoughCachedProducts(
+        cacheKey,
+        30
+      );
+    } catch (dbError) {
+      console.error("❌ Database cache check failed:", dbError);
+      // Continue without cache if database fails
+    }
+
+    if (hasCachedProducts) {
+      try {
+        console.log(
+          `✅ Returning cached products from database for cache key: "${cacheKey}"`
+        );
+        const cachedProducts = await GoogleShoppingProduct.getCachedProducts(
+          cacheKey,
+          60
+        );
+
+        const formattedProducts = cachedProducts.map((p) => ({
+          id: p.id,
+          title: p.title_fa,
+          originalTitle: p.title,
+          price: parseFloat(p.price),
+          image: p.thumbnail,
+          link: p.link,
+          source: p.source,
+          createdAt: p.createdAt,
+        }));
+
+        return NextResponse.json({
+          products: formattedProducts,
+          total: formattedProducts.length,
+          search_query: query,
+          query_type: queryType,
+          message: `${formattedProducts.length} محصول از کش بازیابی شد.`,
+          cached: true,
+          from_database: true,
+        });
+      } catch (cacheError) {
+        console.error("❌ Failed to retrieve cached products:", cacheError);
+        // Continue with fresh search if cache retrieval fails
+      }
     }
 
     console.log(`🔍 Starting search for query: "${query}"`);
@@ -190,18 +367,92 @@ export async function GET(request: NextRequest) {
     // Check if API keys are available
     if (!process.env.SERPAPI_KEY) {
       console.error("❌ SERPAPI_KEY is not configured");
-      return NextResponse.json(
-        { error: "Search service is not configured" },
-        { status: 500 }
+
+      // Try to return cached products even if API is not configured
+      try {
+        const cachedProducts = await GoogleShoppingProduct.getCachedProducts(
+          queryType,
+          30
+        );
+
+        if (cachedProducts.length > 0) {
+          console.log(
+            `✅ Returning ${cachedProducts.length} cached products despite missing API key`
+          );
+          const formattedProducts = cachedProducts.map((p) => ({
+            id: p.id,
+            title: p.title_fa,
+            originalTitle: p.title,
+            price: parseFloat(p.price),
+            image: p.thumbnail,
+            link: p.link,
+            source: p.source,
+            createdAt: p.createdAt,
+          }));
+
+          return NextResponse.json({
+            products: formattedProducts,
+            total: formattedProducts.length,
+            search_query: query,
+            query_type: queryType,
+            message: `${formattedProducts.length} محصول از کش بازیابی شد. (API کلید تنظیم نشده)`,
+            cached: true,
+            from_database: true,
+            api_configured: false,
+          });
+        }
+      } catch (dbError) {
+        console.error("❌ Database connection failed:", dbError);
+      }
+
+      // If no cached products, redirect to sample products API
+      console.log("🔄 Redirecting to sample products API");
+      const sampleResponse = await fetch(
+        `${request.nextUrl.origin}/api/shopping/sample-products?q=${encodeURIComponent(query)}`
       );
+      const sampleData = await sampleResponse.json();
+
+      return NextResponse.json({
+        ...sampleData,
+        message:
+          "محصولات نمونه نمایش داده می‌شوند. برای نتایج واقعی، لطفاً API keys را تنظیم کنید.",
+        api_configured: false,
+        sample_data: true,
+      });
     }
 
     // Connect to database
-    await connectToDatabase();
+    try {
+      await connectToDatabase();
+    } catch (dbError) {
+      console.error("❌ Database connection failed:", dbError);
+      // Continue without database if connection fails
+      // The search will still work, just without caching
+    }
 
     // Add randomization to search results by modifying query slightly
     // Remove timestamp if present to clean the query
     let cleanQuery = query.replace(/\s+\d{13}$/, "").trim();
+
+    // Add query-specific enhancements for better differentiation
+    const queryLower = cleanQuery.toLowerCase();
+
+    // Add gender-specific keywords for fashion queries
+    if (
+      queryLower.includes("مردانه") ||
+      queryLower.includes("men") ||
+      queryLower.includes("erkek")
+    ) {
+      cleanQuery = `${cleanQuery} erkek giyim erkek moda erkek kıyafet`;
+      console.log(`👔 Added men's fashion keywords`);
+    } else if (
+      queryLower.includes("زنانه") ||
+      queryLower.includes("women") ||
+      queryLower.includes("kadın")
+    ) {
+      cleanQuery = `${cleanQuery} kadın giyim kadın moda kadın kıyafet`;
+      console.log(`👗 Added women's fashion keywords`);
+    }
 
     // Add random variation words for diverse results
     const randomVariations = [
@@ -215,15 +466,22 @@ export async function GET(request: NextRequest) {
       "indirimli",
       "ucuz",
       "premium",
+      "marka",
+      "orijinal",
     ];
     const randomWord =
       randomVariations[Math.floor(Math.random() * randomVariations.length)];
-    const shouldAddVariation = Math.random() > 0.5; // 50% chance
+    const shouldAddVariation = Math.random() > 0.3; // 70% chance for more variety
 
     if (shouldAddVariation) {
       cleanQuery = `${cleanQuery} ${randomWord}`;
       console.log(`🎲 Added random variation: "${randomWord}"`);
     }
+
+    // Add timestamp to ensure unique queries and avoid caching issues
+    const timestamp = Date.now();
+    cleanQuery = `${cleanQuery} ${timestamp}`;
+    console.log(`⏰ Added timestamp to query: ${timestamp}`);
 
     // ترجمه و بهبود کوئری جستجو با OpenAI - فقط اگر API key موجود باشد
     let enhancedQuery = cleanQuery;
@@ -385,7 +643,6 @@ export async function GET(request: NextRequest) {
     ];
 
     // تشخیص نوع کوئری با اولویت‌بندی
-    let queryType = "other";
     let isFashionQuery = false;
 
     if (petsKeywords.some((keyword) => lowerQuery.includes(keyword))) {
@@ -475,17 +732,71 @@ export async function GET(request: NextRequest) {
 
     console.log("🔍 Search parameters:", serpApiParams);
 
-    const shoppingResults = await getJson(serpApiParams);
+    let shoppingResults;
+    let retryCount = 0;
+    const maxRetries = 2;
+
+    while (retryCount <= maxRetries) {
+      try {
+        console.log(`🔍 SERPAPI attempt ${retryCount + 1}/${maxRetries + 1}`);
+        shoppingResults = await getJson(serpApiParams);
+        console.log("✅ SERPAPI request successful");
+        break; // Success, exit retry loop
+      } catch (serpError) {
+        retryCount++;
+        console.error(`❌ SERPAPI Error (attempt ${retryCount}):`, serpError);
+
+        // Check if it's an API key issue
+        if (serpError instanceof Error) {
+          if (
+            serpError.message.includes("API key") ||
+            serpError.message.includes("authentication")
+          ) {
+            throw new Error("SERPAPI_KEY is invalid or missing");
+          } else if (
+            serpError.message.includes("quota") ||
+            serpError.message.includes("rate limit")
+          ) {
+            throw new Error("SERPAPI rate limit exceeded");
+          } else if (
+            serpError.message.includes("timeout") ||
+            serpError.message.includes("network")
+          ) {
+            if (retryCount <= maxRetries) {
+              console.log(
+                `🔄 Retrying due to timeout... (${retryCount}/${maxRetries})`
+              );
+              await new Promise((resolve) =>
+                setTimeout(resolve, 1000 * retryCount)
+              ); // Exponential backoff
+              continue;
+            } else {
+              throw new Error("SERPAPI request timeout after retries");
+            }
+          }
+        }
+
+        // If we've exhausted retries, throw the error
+        if (retryCount > maxRetries) {
+          throw new Error(
+            `SERPAPI request failed after ${maxRetries + 1} attempts: ${serpError instanceof Error ? serpError.message : "Unknown error"}`
+          );
+        }
+
+        // For other errors, wait and retry
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+      }
+    }
 
     console.log("🔍 Raw search results:", {
-      hasResults: !!shoppingResults.shopping_results,
-      resultCount: shoppingResults.shopping_results?.length || 0,
-      searchInfo: shoppingResults.search_information,
+      hasResults: !!shoppingResults?.shopping_results,
+      resultCount: shoppingResults?.shopping_results?.length || 0,
+      searchInfo: shoppingResults?.search_information,
     });
 
     // Debug: log کردن ساختار داده برای بهبود
     if (
-      shoppingResults.shopping_results &&
+      shoppingResults?.shopping_results &&
       shoppingResults.shopping_results.length > 0
     ) {
       const sampleProduct = shoppingResults.shopping_results[0];
@@ -499,7 +810,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (
-      !shoppingResults.shopping_results ||
+      !shoppingResults?.shopping_results ||
       shoppingResults.shopping_results.length === 0
     ) {
       console.log("❌ No search results found");
@@ -513,11 +824,12 @@ export async function GET(request: NextRequest) {
 
     // نمایش همه محصولات (بدون فیلتر اولیه)
     console.log(
-      `🔍 Total products from SerpAPI: ${shoppingResults.shopping_results.length}`
+      `🔍 Total products from SerpAPI: ${shoppingResults?.shopping_results?.length || 0}`
     );
 
     // اگر برای کوئری مد و پوشاک نتایج کم است، سعی کن با چندین جستجوی موازی
-    let limitedResults = shoppingResults.shopping_results.slice(0, resultCount);
+    let limitedResults =
+      shoppingResults?.shopping_results?.slice(0, resultCount) || [];
 
     if (isFashionQuery && limitedResults.length < 30) {
       console.log(
@@ -797,8 +1109,23 @@ export async function GET(request: NextRequest) {
             createdAt: new Date(),
           };
 
-          // Save to MongoDB
+          // Save to MongoDB with cache management
           try {
+            const productData = {
+              id:
+                product.product_id ||
+                `general_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              title: product.title,
+              title_fa: persianTitle,
+              price: finalPrice.toString(),
+              link: storeLink,
+              thumbnail: product.thumbnail || product.image,
+              source: product.source || "فروشگاه آنلاین",
+              category: cacheKey, // Use the specific cache key instead of queryType
+              createdAt: new Date(),
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+            };
+
             const savedProduct = new GoogleShoppingProduct(productData);
             await savedProduct.save();
             console.log(`💾 Saved to database: ${persianTitle}`);
@@ -919,6 +1246,16 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Final processed products: ${enhancedProducts.length}`);
 
+    // Manage cache after saving products
+    if (enhancedProducts.length > 0) {
+      try {
+        await GoogleShoppingProduct.limitProductsPerCategory(cacheKey, 60);
+        console.log(`🗂️ Cache managed for category: ${queryType}`);
+      } catch (cacheError) {
+        console.error(`❌ Cache management error:`, cacheError);
+      }
+    }
+
     let message = "";
     if (enhancedProducts.length === 0) {
       message = "هیچ محصولی یافت نشد. لطفاً کلمات کلیدی دیگری امتحان کنید.";
@@ -939,22 +1276,52 @@ export async function GET(request: NextRequest) {
       cached: false,
     };
 
-    // Cache the successful response
-    searchCache.set(cacheKey, {
-      data: responseData,
-      timestamp: now,
-      ttl: SEARCH_CACHE_TTL,
-    });
-
     return NextResponse.json(responseData);
   } catch (error) {
     console.error("❌ Shopping API Error:", error);
+
+    // Provide more specific error messages based on error type
+    let errorMessage = "خطا در جستجوی محصولات. لطفاً دوباره تلاش کنید.";
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      if (
+        error.message.includes("SERPAPI_KEY") ||
+        error.message.includes("API key")
+      ) {
+        errorMessage = "خطا در تنظیمات API. لطفاً با پشتیبانی تماس بگیرید.";
+        statusCode = 500;
+      } else if (
+        error.message.includes("MONGODB_URI") ||
+        error.message.includes("database")
+      ) {
+        errorMessage = "خطا در اتصال به پایگاه داده. لطفاً دوباره تلاش کنید.";
+        statusCode = 500;
+      } else if (
+        error.message.includes("timeout") ||
+        error.message.includes("network")
+      ) {
+        errorMessage = "زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید.";
+        statusCode = 408;
+      } else if (
+        error.message.includes("rate limit") ||
+        error.message.includes("quota")
+      ) {
+        errorMessage = "محدودیت استفاده از API. لطفاً بعداً تلاش کنید.";
+        statusCode = 429;
+      } else {
+        errorMessage = error.message;
+        statusCode = 500;
+      }
+    }
+
     return NextResponse.json(
       {
-        error: "خطا در جستجوی محصولات. لطفاً دوباره تلاش کنید.",
+        error: errorMessage,
         details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

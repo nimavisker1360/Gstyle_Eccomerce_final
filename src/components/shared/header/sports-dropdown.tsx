@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import Link from "next/link";
 
 const sportsCategories = {
   "کفش ورزشی": [
     "کفش دویدن",
-    "کفش پیاده‌روی", 
+    "کفش پیاده‌روی",
     "کفش بسکتبال",
     "کفش فوتبال",
     "کفش تنیس",
@@ -31,7 +30,7 @@ const sportsCategories = {
     "تاپ ورزشی",
     "ساعت ورزشی",
     "ماشین تناسب اندام",
-  ]
+  ],
 };
 
 export default function SportsDropdown() {
@@ -86,16 +85,17 @@ export default function SportsDropdown() {
             {Object.entries(sportsCategories).map(
               ([mainCategory, subCategories]) => (
                 <div key={mainCategory} className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-800 border-b pb-1">{mainCategory}</h4>
+                  <h4 className="font-semibold text-sm text-gray-800 border-b pb-1">
+                    {mainCategory}
+                  </h4>
                   <div className="grid grid-cols-2 gap-1">
                     {subCategories.map((item) => (
-                      <Link
+                      <span
                         key={item}
-                        href={`/sports-search?q=${encodeURIComponent(item)}`}
                         className="text-green-700 font-bold hover:text-blue-700 text-xs py-1 px-2 rounded hover:bg-blue-50 transition-colors cursor-pointer"
                       >
                         <span className="truncate">{item}</span>
-                      </Link>
+                      </span>
                     ))}
                   </div>
                 </div>

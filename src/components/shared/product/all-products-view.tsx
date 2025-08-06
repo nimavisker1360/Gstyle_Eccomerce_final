@@ -261,7 +261,26 @@ export default function AllProductsView({
         }
       } catch (err) {
         console.error("❌ Search error:", err);
-        setError("خطا در دریافت محصولات. لطفاً دوباره تلاش کنید.");
+
+        // Show more specific error messages
+        let errorMessage = "خطا در دریافت محصولات. لطفاً دوباره تلاش کنید.";
+
+        if (err instanceof Error) {
+          if (
+            err.message.includes("SERPAPI_KEY") ||
+            err.message.includes("Search service is not configured")
+          ) {
+            errorMessage =
+              "API کلید تنظیم نشده. لطفاً SERPAPI_KEY را در فایل .env.local اضافه کنید.";
+          } else if (err.message.includes("OPENAI_API_KEY")) {
+            errorMessage =
+              "API کلید OpenAI تنظیم نشده. لطفاً OPENAI_API_KEY را در فایل .env.local اضافه کنید.";
+          } else if (err.message.includes("خطا در دریافت اطلاعات")) {
+            errorMessage = "خطا در اتصال به سرور. لطفاً دوباره تلاش کنید.";
+          }
+        }
+
+        setError(errorMessage);
         setProducts([]);
         setMessage("");
       } finally {
