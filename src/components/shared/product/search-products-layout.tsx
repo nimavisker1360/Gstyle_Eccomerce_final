@@ -475,7 +475,7 @@ export default function SearchProductsLayout({
       }
       handleSearch(initialQuery);
     }
-  }, [initialQuery, handleSearch, brandFilter, typeFilter]);
+  }, [initialQuery, handleSearch, brandFilter, typeFilter, currentSearch]);
 
   // اگر هیچ query اولیه‌ای وجود نداشته باشد و allowEmpty false باشد، هیچ محصولی نمایش نده
   if ((!initialQuery || !initialQuery.trim()) && !allowEmpty) {

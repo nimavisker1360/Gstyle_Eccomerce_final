@@ -94,7 +94,7 @@ export default function VitaminDropdown() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [CACHE_EXPIRY]);
 
   // Load categories on component mount
   useEffect(() => {

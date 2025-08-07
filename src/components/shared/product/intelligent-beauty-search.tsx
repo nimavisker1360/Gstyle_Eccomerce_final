@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, Sparkles, Heart, ShoppingCart, Star, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,67 +69,71 @@ export default function IntelligentBeautySearch({
   const { toast } = useToast();
   const { addItem } = useCartStore();
 
-  const handleSearch = async (searchQuery: string) => {
-    if (!searchQuery.trim() && !allowEmpty) {
-      toast({
-        title: "خطا",
-        description: "لطفاً کلمه کلیدی برای جستجو وارد کنید",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSearched(true);
-
-    try {
-      const response = await fetch(
-        `${apiEndpoint}?q=${encodeURIComponent(searchQuery.trim())}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      setProducts(data.products || []);
-      setSearchStats({
-        total: data.total || 0,
-        search_query: data.search_query || searchQuery,
-        turkish_query: data.turkish_query || "",
-        enhanced_queries: data.enhanced_queries || [],
-        message: data.message || "",
-      });
-
-      if (data.products && data.products.length > 0) {
+  const handleSearch = useCallback(
+    async (searchQuery: string) => {
+      if (!searchQuery.trim() && !allowEmpty) {
         toast({
-          title: "✅ جستجو موفق",
-          description: `${data.products.length} محصول زیبایی یافت شد`,
+          title: "خطا",
+          description: "لطفاً کلمه کلیدی برای جستجو وارد کنید",
+          variant: "destructive",
         });
-      } else {
-        toast({
-          title: "⚠️ نتیجه‌ای یافت نشد",
-          description: "لطفاً کلمات کلیدی دیگری امتحان کنید",
-        });
+        return;
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "خطا در جستجو";
-      setError(errorMessage);
-      toast({
-        title: "❌ خطا در جستجو",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      setLoading(true);
+      setError(null);
+      setSearched(true);
+
+      try {
+        const response = await fetch(
+          `${apiEndpoint}?q=${encodeURIComponent(searchQuery.trim())}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        setProducts(data.products || []);
+        setSearchStats({
+          total: data.total || 0,
+          search_query: data.search_query || searchQuery,
+          turkish_query: data.turkish_query || "",
+          enhanced_queries: data.enhanced_queries || [],
+          message: data.message || "",
+        });
+
+        if (data.products && data.products.length > 0) {
+          toast({
+            title: "✅ جستجو موفق",
+            description: `${data.products.length} محصول زیبایی یافت شد`,
+          });
+        } else {
+          toast({
+            title: "⚠️ نتیجه‌ای یافت نشد",
+            description: "لطفاً کلمات کلیدی دیگری امتحان کنید",
+          });
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "خطا در جستجو";
+        setError(errorMessage);
+        toast({
+          title: "❌ خطا در جستجو",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [apiEndpoint, allowEmpty, toast]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

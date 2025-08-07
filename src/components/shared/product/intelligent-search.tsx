@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, Sparkles, Heart, ShoppingCart, Star, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,96 +83,100 @@ export default function IntelligentSearch({
   const { toast } = useToast();
   const { addItem } = useCartStore();
 
-  const handleSearch = async (searchQuery: string) => {
-    if (!searchQuery.trim() && !allowEmpty) {
-      toast({
-        title: "خطا",
-        description: "لطفاً کلمه کلیدی برای جستجو وارد کنید",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSearch = useCallback(
+    async (searchQuery: string) => {
+      if (!searchQuery.trim() && !allowEmpty) {
+        toast({
+          title: "خطا",
+          description: "لطفاً کلمه کلیدی برای جستجو وارد کنید",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    setLoading(true);
-    setError(null);
-    setSearched(true);
+      setLoading(true);
+      setError(null);
+      setSearched(true);
 
-    try {
-      // Check client-side cache first
-      const cacheKey = `intelligent:${apiEndpoint}:${searchQuery.toLowerCase().trim()}`;
-      const cacheExpiry = 5 * 60 * 1000; // 5 minutes
-      const cached = localStorage.getItem(cacheKey);
-      const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+      try {
+        // Check client-side cache first
+        const cacheKey = `intelligent:${apiEndpoint}:${searchQuery.toLowerCase().trim()}`;
+        const cacheExpiry = 5 * 60 * 1000; // 5 minutes
+        const cached = localStorage.getItem(cacheKey);
+        const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
 
-      if (cached && cacheTimestamp) {
-        const now = Date.now();
-        const timestamp = parseInt(cacheTimestamp);
+        if (cached && cacheTimestamp) {
+          const now = Date.now();
+          const timestamp = parseInt(cacheTimestamp);
 
-        if (now - timestamp < cacheExpiry) {
-          console.log("✅ Using cached intelligent search results");
-          const cachedData = JSON.parse(cached);
-          setProducts(cachedData.products || []);
-          setSearchStats(cachedData.searchStats || {});
-          setLoading(false);
-          return;
+          if (now - timestamp < cacheExpiry) {
+            console.log("✅ Using cached intelligent search results");
+            const cachedData = JSON.parse(cached);
+            setProducts(cachedData.products || []);
+            setSearchStats(cachedData.searchStats || {});
+            setLoading(false);
+            return;
+          }
         }
-      }
 
-      const response = await fetch(
-        `${apiEndpoint}?q=${encodeURIComponent(searchQuery.trim())}`
-      );
+        const response = await fetch(
+          `${apiEndpoint}?q=${encodeURIComponent(searchQuery.trim())}`
+        );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error);
-      }
+        if (data.error) {
+          throw new Error(data.error);
+        }
 
-      setProducts(data.products || []);
-      const searchStats = {
-        total: data.total || 0,
-        search_query: data.search_query || searchQuery,
-        turkish_query: data.turkish_query || "",
-        enhanced_queries: data.enhanced_queries || [],
-        message: data.message || "",
-      };
-      setSearchStats(searchStats);
+        setProducts(data.products || []);
+        const searchStats = {
+          total: data.total || 0,
+          search_query: data.search_query || searchQuery,
+          turkish_query: data.turkish_query || "",
+          enhanced_queries: data.enhanced_queries || [],
+          message: data.message || "",
+        };
+        setSearchStats(searchStats);
 
-      // Cache successful results
-      const cacheData = {
-        products: data.products || [],
-        searchStats,
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-      localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+        // Cache successful results
+        const cacheData = {
+          products: data.products || [],
+          searchStats,
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
 
-      if (data.products && data.products.length > 0) {
+        if (data.products && data.products.length > 0) {
+          toast({
+            title: "✅ جستجو موفق",
+            description: `${data.products.length} ${successMessage}`,
+          });
+        } else {
+          toast({
+            title: "⚠️ نتیجه‌ای یافت نشد",
+            description: noResultsMessage,
+          });
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "خطا در جستجو";
+        setError(errorMessage);
         toast({
-          title: "✅ جستجو موفق",
-          description: `${data.products.length} ${successMessage}`,
+          title: "❌ خطا در جستجو",
+          description: errorMessage,
+          variant: "destructive",
         });
-      } else {
-        toast({
-          title: "⚠️ نتیجه‌ای یافت نشد",
-          description: noResultsMessage,
-        });
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "خطا در جستجو";
-      setError(errorMessage);
-      toast({
-        title: "❌ خطا در جستجو",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [apiEndpoint, allowEmpty, toast, successMessage, noResultsMessage]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

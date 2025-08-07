@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,15 +39,18 @@ export default function GoogleShoppingProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const searchQueries = {
-    fashion: "women clothing fashion",
-    beauty: "cosmetics makeup skincare",
-    electronics: "smartphone laptop tablet",
-    sports: "sports equipment fitness",
-    pets: "pet food pet accessories",
-    vitamins: "vitamins supplements health",
-    accessories: "jewelry watches bags",
-  };
+  const searchQueries = useMemo(
+    () => ({
+      fashion: "women clothing fashion",
+      beauty: "cosmetics makeup skincare",
+      electronics: "smartphone laptop tablet",
+      sports: "sports equipment fitness",
+      pets: "pet food pet accessories",
+      vitamins: "vitamins supplements health",
+      accessories: "jewelry watches bags",
+    }),
+    []
+  );
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -83,7 +86,7 @@ export default function GoogleShoppingProducts() {
     };
 
     fetchProducts();
-  }, []);
+  }, [searchQueries]);
 
   const handleAddToCart = (product: GoogleShoppingProduct) => {
     // TODO: Implement add to cart functionality
