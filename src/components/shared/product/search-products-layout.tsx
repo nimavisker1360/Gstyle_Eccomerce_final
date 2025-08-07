@@ -440,8 +440,12 @@ export default function SearchProductsLayout({
         let errorMessage = "خطا در جستجوی محصولات. لطفاً دوباره تلاش کنید.";
 
         if (err instanceof Error) {
-          if (err.name === "AbortError" || err.message.includes("timeout")) {
-            errorMessage = "زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید.";
+          if (
+            err.name === "AbortError" ||
+            err.message.includes("timeout") ||
+            err.message.includes("signal timed out")
+          ) {
+            errorMessage = "دوباره سرچ کنید";
           } else if (err.message.includes("Failed to fetch")) {
             errorMessage =
               "خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.";
