@@ -169,10 +169,16 @@ export default function SportsDropdown() {
               {Object.entries(categories).map(
                 ([mainCategory, subCategories]) => (
                   <div key={mainCategory} className="space-y-2">
-                    <h4 className="font-semibold text-sm text-gray-800 border-b pb-1">
+                    <h4
+                      className="font-semibold text-sm text-blue-700 border-b pb-1"
+                      style={{ direction: "rtl", textAlign: "right" }}
+                    >
                       {mainCategory}
                     </h4>
-                    <div className="grid grid-cols-2 gap-1">
+                    <div
+                      className="grid grid-cols-2 gap-1"
+                      style={{ direction: "rtl" }}
+                    >
                       {subCategories.map((item) => (
                         <span
                           key={item}
