@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -156,9 +157,11 @@ export default function GoogleShoppingProducts() {
                 className="overflow-hidden hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="relative">
-                  <img
+                  <Image
                     src={product.thumbnail}
                     alt={product.title}
+                    width={400}
+                    height={192}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
