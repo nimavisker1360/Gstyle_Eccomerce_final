@@ -5,6 +5,7 @@ import { Menu, X, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import data from "@/lib/data";
+import TelegramButton from "./telegram-button";
 
 // Categories data for dropdowns
 const fashionCategories = {
@@ -384,6 +385,13 @@ export default function MobileCategoriesMenu() {
               )}
             </div>
           ))}
+
+          {/* Telegram Button - Added at the end */}
+          <div className="border-b border-gray-100">
+            <div className="p-4">
+              <TelegramButton />
+            </div>
+          </div>
         </div>
       </div>
     </>

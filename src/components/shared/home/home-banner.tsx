@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 
 export function HomeBanner() {
   const bannerImages = [
+    "/images/banner06.jpg",
     "/images/1.jpg",
     "/images/2.jpg",
     "/images/3.jpg",
@@ -12,12 +13,12 @@ export function HomeBanner() {
     "/images/5.jpg",
   ];
 
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0); // Start with first banner (index 0)
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerImages.length);
-    }, 5000);
+    }, 7000);
 
     return () => clearInterval(interval);
   }, [bannerImages.length]);

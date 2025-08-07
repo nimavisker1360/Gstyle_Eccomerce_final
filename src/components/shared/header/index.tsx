@@ -14,6 +14,7 @@ import ElectronicsDropdown from "./electronics-dropdown";
 import PetsDropdown from "./pets-dropdown";
 import VitaminDropdown from "./vitamin-dropdown";
 import MobileCategoriesMenu from "./mobile-categories-menu";
+import TelegramButton from "./telegram-button";
 
 export default function Header() {
   return (
@@ -69,6 +70,7 @@ export default function Header() {
       <div className="bg-gray-50 px-4 sm:px-6 py-2 sm:py-3">
         <div className="flex items-center justify-center space-x-6 sm:space-x-8 text-sm max-w-7xl mx-auto">
           <div className="hidden md:flex items-center space-x-8 text-sm">
+            <TelegramButton />
             {data.headerMenus.map((menu) =>
               menu.name === "مد و پوشاک" ? (
                 <FashionDropdown key={menu.href} />
