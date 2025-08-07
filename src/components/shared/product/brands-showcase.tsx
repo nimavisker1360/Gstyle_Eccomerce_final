@@ -22,7 +22,7 @@ export default function BrandsShowcase() {
   return (
     <section
       id="brands"
-      className="w-full py-12 bg-white flex flex-col items-center overflow-hidden border border-gray-200 rounded-lg shadow-lg"
+      className="w-full py-12 bg-white flex flex-col items-center overflow-hidden border-2 border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
     >
       <h2
         className="text-2xl md:text-3xl font-bold mb-8 text-center"
@@ -34,7 +34,7 @@ export default function BrandsShowcase() {
         برندها
       </h2>
       <div className="w-full flex justify-center relative px-4">
-        <div className="grid grid-cols-2  md:grid-cols-6 gap-6 md:gap-24 max-w-full">
+        <div className="grid grid-cols-2  md:grid-cols-6 gap-20 lg:gap-24 max-w-full">
           {brandImages.map((img, idx) => (
             <div
               key={img}
