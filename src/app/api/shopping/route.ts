@@ -352,7 +352,8 @@ export async function GET(request: NextRequest) {
           total: formattedProducts.length,
           search_query: query,
           query_type: queryType,
-          message: `${formattedProducts.length} محصول از کش بازیابی شد.`,
+          message:
+            "\u202Aبرای سفارش محصول روی + کلیک کنید تا محصول به سبد خرید انتقال داده بشه\u202C",
           cached: true,
           from_database: true,
         });
@@ -395,7 +396,8 @@ export async function GET(request: NextRequest) {
             total: formattedProducts.length,
             search_query: query,
             query_type: queryType,
-            message: `${formattedProducts.length} محصول از کش بازیابی شد. (API کلید تنظیم نشده)`,
+            message:
+              "\u202Aبرای سفارش محصول روی + کلیک کنید تا محصول به سبد خرید انتقال داده بشه\u202C",
             cached: true,
             from_database: true,
             api_configured: false,

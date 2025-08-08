@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, ChevronRight } from "lucide-react";
+import { Search, Loader2, ChevronRight, Plus } from "lucide-react";
 import ShoppingProductCard from "./shopping-product-card";
 import Link from "next/link";
 
@@ -614,23 +614,34 @@ export default function SearchProductsLayout({
     if (!message || error) return null;
 
     return (
-      <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">
-        <div className="flex items-start">
-          <div className="flex-shrink-0">
-            <svg
-              className="h-5 w-5 text-blue-400"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <div className="mr-3">
-            <p className="text-sm">{message}</p>
+      <div
+        className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-right"
+        dir="rtl"
+      >
+        <div className="flex items-start justify-end flex-row-reverse">
+          <div className="ml-3">
+            <p className="text-sm text-right">
+              {(() => {
+                const parts = message.split("+");
+                if (parts.length === 1) return message;
+                return (
+                  <span>
+                    {parts.map((part, idx) => (
+                      <span key={idx}>
+                        {part}
+                        {idx < parts.length - 1 && (
+                          <span className="inline-flex align-middle mx-1">
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white">
+                              <Plus className="w-3 h-3" />
+                            </span>
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                );
+              })()}
+            </p>
             {message.includes("نمونه") && (
               <p className="text-xs mt-1 text-blue-600">
                 برای تنظیم API keys، فایل .env.local را ایجاد کرده و SERPAPI_KEY

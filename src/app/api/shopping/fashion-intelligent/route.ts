@@ -29,75 +29,223 @@ const TURKISH_FASHION_SITES = [
   "flo.com.tr",
 ];
 
-// Function to filter products from Turkish fashion sites
-function filterTurkishFashionProducts(products: any[]): any[] {
+type GenderIntent = "men" | "women" | "kids" | null;
+type SubcategoryIntent =
+  | "jeans"
+  | "pants"
+  | "shirt"
+  | "tshirt"
+  | "dress"
+  | "shoes"
+  | "jacket"
+  | "coat"
+  | "skirt"
+  | "sweater"
+  | null;
+
+interface FashionIntent {
+  gender: GenderIntent;
+  subcategory: SubcategoryIntent;
+}
+
+function detectFashionIntent(persianQuery: string): FashionIntent {
+  const q = persianQuery.toLowerCase();
+  let gender: GenderIntent = null;
+  if (/(مردانه|آقایان|اقایان|مرد|پسرانه)/.test(q)) gender = "men";
+  else if (/(زنانه|بانوان|خانم ها|خانم‌ها|دخترانه)/.test(q)) gender = "women";
+  else if (/(بچه|کودک|نوزاد|پسرانه|دخترانه|کودکان)/.test(q)) gender = "kids";
+
+  let subcategory: SubcategoryIntent = null;
+  if (/(شلوار\s*جین|جین|لی)/.test(q)) subcategory = "jeans";
+  else if (/شلوار/.test(q)) subcategory = "pants";
+  else if (/(تی\s*شرت|تیشرت|تی-شرت)/.test(q)) subcategory = "tshirt";
+  else if (/پیراهن/.test(q)) subcategory = "shirt";
+  else if (/پیراهن\s*زنانه|لباس|لباس\s*مجلس|مجلس/.test(q))
+    subcategory = "dress";
+  else if (/(کفش|اسنیکرز|صندل|بوت)/.test(q)) subcategory = "shoes";
+  else if (/(کاپشن|ژاکت|کت)/.test(q)) subcategory = "jacket";
+  else if (/پالتو/.test(q)) subcategory = "coat";
+  else if (/دامن/.test(q)) subcategory = "skirt";
+  else if (/(سویشرت|ژاکت\s*بافت|بافت|پلوور|سوئیشرت)/.test(q))
+    subcategory = "sweater";
+
+  return { gender, subcategory };
+}
+
+function buildEnhancedQueriesFromIntent(
+  baseTurkishQuery: string,
+  intent: FashionIntent
+): string[] {
+  const queries: string[] = [];
+
+  const genderMap: Record<Exclude<GenderIntent, null>, string[]> = {
+    men: ["erkek"],
+    women: ["kadın"],
+    kids: ["çocuk", "bebek"],
+  };
+
+  const subcategoryMap: Record<Exclude<SubcategoryIntent, null>, string[]> = {
+    jeans: ["jean", "kot", "denim", "pantolon"],
+    pants: ["pantolon"],
+    shirt: ["gömlek"],
+    tshirt: ["tişört", "t-shirt"],
+    dress: ["elbise"],
+    shoes: ["ayakkabı", "sneaker", "spor ayakkabı", "bot"],
+    jacket: ["ceket", "mont"],
+    coat: ["mont", "kaban"],
+    skirt: ["etek"],
+    sweater: ["kazak", "sweatshirt", "hırka"],
+  };
+
+  const genderWords = intent.gender ? genderMap[intent.gender] : [];
+  const subcatWords = intent.subcategory
+    ? subcategoryMap[intent.subcategory]
+    : [];
+
+  if (genderWords.length === 0 && subcatWords.length === 0) {
+    return [baseTurkishQuery];
+  }
+
+  const combinations: string[] = [];
+  const base = baseTurkishQuery.replace(/\s+/g, " ").trim();
+
+  if (genderWords.length && subcatWords.length) {
+    for (const g of genderWords) {
+      for (const s of subcatWords) {
+        combinations.push(`${g} ${s}`);
+        combinations.push(`${s} ${g}`);
+      }
+    }
+  } else if (genderWords.length) {
+    for (const g of genderWords) combinations.push(g);
+  } else if (subcatWords.length) {
+    for (const s of subcatWords) combinations.push(s);
+  }
+
+  for (const c of combinations) {
+    queries.push(`${base} ${c}`.trim());
+  }
+
+  // Add a couple of targeted variants for jeans intent
+  if (intent.subcategory === "jeans") {
+    if (intent.gender === "men") {
+      queries.push("erkek kot pantolon");
+      queries.push("erkek jean pantolon");
+    } else if (intent.gender === "women") {
+      queries.push("kadın kot pantolon");
+      queries.push("kadın jean pantolon");
+    }
+  }
+
+  // Ensure uniqueness
+  return Array.from(new Set(queries)).slice(0, 5);
+}
+
+// Function to filter products from Turkish fashion sites with strict intent matching
+function filterTurkishFashionProducts(
+  products: any[],
+  intent?: FashionIntent
+): any[] {
+  const genderRequired: Record<Exclude<GenderIntent, null>, string[]> = {
+    men: ["erkek"],
+    women: ["kadın"],
+    kids: ["çocuk", "bebek"],
+  };
+
+  const genderExclude: Record<Exclude<GenderIntent, null>, string[]> = {
+    men: ["kadın"],
+    women: ["erkek"],
+    kids: [],
+  };
+
+  const subcatRequired: Record<Exclude<SubcategoryIntent, null>, string[]> = {
+    jeans: ["jean", "kot", "denim", "pantolon"],
+    pants: ["pantolon"],
+    shirt: ["gömlek"],
+    tshirt: ["tişört", "t-shirt"],
+    dress: ["elbise"],
+    shoes: ["ayakkabı", "sneaker", "spor ayakkabı", "bot"],
+    jacket: ["ceket", "mont"],
+    coat: ["kaban", "mont"],
+    skirt: ["etek"],
+    sweater: ["kazak", "sweatshirt", "hırka"],
+  };
+
   return products.filter((product) => {
     const productLink =
       product.link || product.source_link || product.merchant?.link || "";
     const isFromTurkishSite = TURKISH_FASHION_SITES.some((site) =>
       productLink.toLowerCase().includes(site)
     );
+    if (!isFromTurkishSite) return false;
 
     const title = (product.title || "").toLowerCase();
     const description = (product.snippet || "").toLowerCase();
-    const combined = title + " " + description;
+    const combined = `${title} ${description}`;
 
-    const fashionKeywords = [
-      "giyim",
-      "clothing",
-      "moda",
-      "fashion",
-      "elbise",
-      "dress",
-      "gömlek",
-      "shirt",
-      "pantolon",
-      "pants",
-      "jean",
-      "denim",
-      "etek",
-      "skirt",
-      "bluz",
-      "blouse",
-      "tişört",
-      "t-shirt",
-      "kazak",
-      "sweater",
-      "ceket",
-      "jacket",
-      "mont",
-      "coat",
-      "ayakkabı",
-      "shoes",
-      "bot",
-      "boots",
-      "spor ayakkabı",
-      "sneakers",
-      "çanta",
-      "bag",
-      "el çantası",
-      "handbag",
-      "aksesuar",
-      "accessories",
-      "takı",
-      "jewelry",
-      "saat",
-      "watch",
-      "kadın",
-      "women",
-      "erkek",
-      "men",
-      "çocuk",
-      "kids",
-      "bebek",
-      "baby",
-    ];
+    // If we have an intent, enforce it strictly
+    if (intent) {
+      if (intent.gender) {
+        const must = genderRequired[intent.gender];
+        const notAllowed = genderExclude[intent.gender];
+        const hasGender = must.some((w) => combined.includes(w));
+        const hasOpposite = notAllowed.some((w) => combined.includes(w));
+        if (!hasGender || hasOpposite) return false;
+      }
+      if (intent.subcategory) {
+        const must = subcatRequired[intent.subcategory];
+        const hasSubcat = must.some((w) => combined.includes(w));
+        if (!hasSubcat) return false;
+      }
+    } else {
+      // Fallback broad fashion relevance
+      const fashionKeywords = [
+        "giyim",
+        "clothing",
+        "moda",
+        "fashion",
+        "elbise",
+        "dress",
+        "gömlek",
+        "shirt",
+        "pantolon",
+        "pants",
+        "jean",
+        "denim",
+        "etek",
+        "skirt",
+        "bluz",
+        "blouse",
+        "tişört",
+        "t-shirt",
+        "kazak",
+        "sweater",
+        "ceket",
+        "jacket",
+        "mont",
+        "coat",
+        "ayakkabı",
+        "shoes",
+        "bot",
+        "boots",
+        "spor ayakkabı",
+        "sneakers",
+        "çanta",
+        "bag",
+        "el çantası",
+        "handbag",
+        "aksesuar",
+        "accessories",
+        "takı",
+        "jewelry",
+      ];
+      const hasFashionKeywords = fashionKeywords.some((keyword) =>
+        combined.includes(keyword)
+      );
+      if (!hasFashionKeywords) return false;
+    }
 
-    const hasFashionKeywords = fashionKeywords.some((keyword) =>
-      combined.includes(keyword)
-    );
-
-    return isFromTurkishSite && hasFashionKeywords;
+    return true;
   });
 }
 
@@ -287,14 +435,22 @@ export async function GET(request: NextRequest) {
       console.log(`🎲 Added fashion variation: "${randomWord}"`);
     }
 
+    // Detect intent (gender/subcategory) from Persian query
+    const intent = detectFashionIntent(cleanQuery);
+
     // Step 1: Translate Persian to Turkish
     console.log("🔄 Step 1: Translating Persian to Turkish...");
     const turkishQuery = await translatePersianToTurkish(cleanQuery);
     console.log(`✅ Persian to Turkish: "${query}" → "${turkishQuery}"`);
 
-    // Step 2: Enhance Turkish query
+    // Step 2: Enhance Turkish query (intent-aware when possible)
     console.log("🔄 Step 2: Enhancing Turkish query for fashion search...");
-    const enhancedQueries = await enhanceTurkishFashionQuery(turkishQuery);
+    let enhancedQueries: string[] = [];
+    if (intent.gender || intent.subcategory) {
+      enhancedQueries = buildEnhancedQueriesFromIntent(turkishQuery, intent);
+    } else {
+      enhancedQueries = await enhanceTurkishFashionQuery(turkishQuery);
+    }
     console.log(`✅ Enhanced queries:`, enhancedQueries);
 
     // Step 3: Search Turkish fashion sites
@@ -324,7 +480,8 @@ export async function GET(request: NextRequest) {
           searchResults.shopping_results.length > 0
         ) {
           const filteredProducts = filterTurkishFashionProducts(
-            searchResults.shopping_results
+            searchResults.shopping_results,
+            intent
           );
           console.log(
             `✅ Found ${filteredProducts.length} Turkish fashion products for query: "${enhancedQuery}"`
