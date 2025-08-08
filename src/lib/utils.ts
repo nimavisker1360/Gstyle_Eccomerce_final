@@ -39,6 +39,25 @@ export const round2 = (num: number) =>
 export const generateId = () =>
   Array.from({ length: 24 }, () => Math.floor(Math.random() * 10)).join("");
 
+// ===== Currency: TRY → Toman (fixed rate) =====
+// 1 TRY = 3000 Toman (fixed)
+export const TRY_TO_TOMAN_RATE = 3000;
+
+export function convertTRYToToman(tryAmount: number): number {
+  if (!Number.isFinite(tryAmount)) return 0;
+  const raw = tryAmount * TRY_TO_TOMAN_RATE;
+  // Round UP to the nearest 1,000 toman
+  const roundedUpToThousand = Math.ceil(raw / 1000) * 1000;
+  return roundedUpToThousand;
+}
+
+export function formatToman(amountInToman: number): string {
+  const formatted = new Intl.NumberFormat("fa-IR").format(
+    Math.max(0, Math.round(amountInToman))
+  );
+  return `${formatted} تومان`;
+}
+
 export const formatError = (error: any): string => {
   if (error.name === "ZodError") {
     if (!error.errors || typeof error.errors !== "object") {

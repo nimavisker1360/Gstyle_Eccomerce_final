@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       q: query,
       gl: "tr", // ترکیه
       hl: "tr", // زبان ترکی
+      location: "Turkey",
       num: 20,
       device: "desktop",
       api_key: process.env.SERPAPI_KEY,

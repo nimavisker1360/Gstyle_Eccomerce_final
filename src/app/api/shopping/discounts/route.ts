@@ -306,6 +306,7 @@ export async function GET(request: NextRequest) {
           q: query,
           gl: "tr", // تركيا
           hl: "tr", // اللغة التركية
+          location: "Turkey",
           num: 20, // عدد النتائج لكل استفسار
           device: "desktop",
           api_key: process.env.SERPAPI_KEY,

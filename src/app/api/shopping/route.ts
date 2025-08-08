@@ -725,6 +725,7 @@ export async function GET(request: NextRequest) {
       q: enhancedQuery,
       gl: "tr", // ترکیه
       hl: "tr", // زبان ترکی
+      location: "Turkey",
       num: resultCount, // تعداد نتایج بر اساس نوع کوئری
       device: "desktop", // اجباری برای دسکتاپ
       api_key: process.env.SERPAPI_KEY,

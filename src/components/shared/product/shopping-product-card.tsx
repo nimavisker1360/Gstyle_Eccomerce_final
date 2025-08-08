@@ -11,6 +11,7 @@ import {
   Plus,
 } from "lucide-react";
 import useCartStore from "@/hooks/use-cart-store";
+import { convertTRYToToman, formatToman } from "@/lib/utils";
 import { OrderItem } from "@/types";
 
 interface ShoppingProduct {
@@ -93,11 +94,12 @@ export default function ShoppingProductCard({
     return stars;
   };
 
-  const formatPrice = (price: number, currency: string) => {
-    if (currency === "TRY") {
-      return `₺${price.toFixed(2)}`;
-    }
-    return `${price.toFixed(2)} ${currency}`;
+  const formatPriceToman = (price: number, currency: string) => {
+    const isTRY =
+      (currency || "").toUpperCase() === "TRY" ||
+      (currency || "").toUpperCase() === "TL";
+    const tryAmount = isTRY ? price : price; // assume TRY for shopping results
+    return formatToman(convertTRYToToman(tryAmount));
   };
 
   const hasDiscount =
@@ -165,13 +167,8 @@ export default function ShoppingProductCard({
         {/* قیمت */}
         <div className="mb-2">
           <span className="text-base font-bold text-green-700 block">
-            {formatPrice(product.price, product.currency)}
+            {formatPriceToman(product.price, product.currency)}
           </span>
-          {hasDiscount && (
-            <span className="text-xs text-gray-500 line-through">
-              {formatPrice(product.originalPrice!, product.currency)}
-            </span>
-          )}
         </div>
 
         {/* دکمه خرید */}

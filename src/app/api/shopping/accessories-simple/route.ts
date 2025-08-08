@@ -287,6 +287,7 @@ export async function GET(request: NextRequest) {
       q: enhancedQuery,
       gl: "tr", // ترکیه
       hl: "tr", // زبان ترکی
+      location: "Turkey",
       num: 50, // افزایش تعداد نتایج
       device: "desktop",
       api_key: process.env.SERPAPI_KEY,

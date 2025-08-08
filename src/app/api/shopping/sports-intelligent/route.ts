@@ -329,6 +329,7 @@ export async function GET(request: NextRequest) {
             " site:decathlon.com.tr OR site:hepsiburada.com OR site:trendyol.com OR site:nike.com.tr OR site:adidas.com.tr",
           gl: "tr",
           hl: "tr",
+          location: "Turkey",
           num: 50,
           device: "desktop",
           api_key: process.env.SERPAPI_KEY,

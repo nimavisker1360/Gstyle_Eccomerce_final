@@ -10,7 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import useCartStore from "@/hooks/use-cart-store";
 import Image from "next/image";
-import { generateId, round2 } from "@/lib/utils";
+import {
+  generateId,
+  round2,
+  convertTRYToToman,
+  formatToman,
+} from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -189,11 +194,12 @@ export default function IntelligentSearch({
     }
   }, [initialQuery, handleSearch]);
 
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat("fa-IR", {
-      style: "currency",
-      currency: currency === "TRY" ? "TRY" : currency,
-    }).format(price);
+  const formatPriceToman = (price: number, currency: string) => {
+    const isTRY =
+      (currency || "").toUpperCase() === "TRY" ||
+      (currency || "").toUpperCase() === "TL";
+    const tryAmount = isTRY ? price : price;
+    return formatToman(convertTRYToToman(tryAmount));
   };
 
   const handleAddToCart = (product: Product) => {
@@ -412,17 +418,8 @@ export default function IntelligentSearch({
                         {/* Price */}
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-bold text-green-600">
-                            {formatPrice(product.price, product.currency)}
+                            {formatPriceToman(product.price, product.currency)}
                           </span>
-                          {product.originalPrice &&
-                            product.originalPrice > product.price && (
-                              <span className="text-sm text-gray-500 line-through">
-                                {formatPrice(
-                                  product.originalPrice,
-                                  product.currency
-                                )}
-                              </span>
-                            )}
                         </div>
 
                         {/* Source */}

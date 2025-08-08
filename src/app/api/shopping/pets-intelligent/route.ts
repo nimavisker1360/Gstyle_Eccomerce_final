@@ -238,6 +238,7 @@ export async function GET(request: NextRequest) {
             " site:hepsiburada.com OR site:trendyol.com OR site:petlebi.com OR site:petzzshop.com",
           gl: "tr",
           hl: "tr",
+          location: "Turkey",
           num: 50,
           device: "desktop",
           api_key: process.env.SERPAPI_KEY,

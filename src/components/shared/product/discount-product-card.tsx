@@ -10,7 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import useCartStore from "@/hooks/use-cart-store";
-import { generateId, round2 } from "@/lib/utils";
+import {
+  generateId,
+  round2,
+  convertTRYToToman,
+  formatToman,
+} from "@/lib/utils";
 
 interface ShoppingProduct {
   id: string;
@@ -45,9 +50,8 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
       ? Math.round(100 - (product.price / product.originalPrice) * 100)
       : Math.floor(Math.random() * 30) + 10; // Random discount 10-40% if no original price
 
-  // Format price in Persian style (no conversion, show original TRY price)
-  const formatPersianPrice = (price: number) => {
-    return new Intl.NumberFormat("fa-IR").format(Math.round(price));
+  const formatTomanPrice = (priceTRY: number) => {
+    return formatToman(convertTRYToToman(priceTRY));
   };
 
   // Render star rating
@@ -70,7 +74,6 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
   };
 
   const priceInTRY = product.price;
-  const originalPriceInTRY = product.originalPrice;
 
   const handleAddToCart = () => {
     try {
@@ -171,15 +174,11 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
         {/* Prices */}
         <div className="space-y-1">
           {/* Original Price (crossed out) - only show if we have original price */}
-          {originalPriceInTRY && originalPriceInTRY > priceInTRY && (
-            <div className="text-xs text-gray-400 line-through text-right">
-              {formatPersianPrice(originalPriceInTRY)} لیر
-            </div>
-          )}
+          {/* Original TRY price hidden per requirement */}
 
           {/* Current Price */}
           <div className="text-sm font-bold text-green-600 text-right">
-            {formatPersianPrice(priceInTRY)} لیر
+            {formatTomanPrice(priceInTRY)}
           </div>
 
           {/* Delivery Info */}

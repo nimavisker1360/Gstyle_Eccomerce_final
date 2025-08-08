@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
       api_key: serpApiKey,
       gl: "tr", // Turkey
       hl: "tr", // Turkish language
+      location: "Turkey",
       num: 20,
     });
 
