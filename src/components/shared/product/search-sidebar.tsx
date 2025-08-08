@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -12,21 +12,17 @@ interface SearchSidebarProps {
   currentQuery?: string;
   totalProducts?: number;
   onFilterChange?: (filters: any) => void;
+  onItemSelected?: () => void; // for mobile: close sidebar after selection
 }
 
-interface Category {
-  id: string;
-  name: string;
-  count: number;
+// Normalized category item used in the sidebar list
+interface CategoryItem {
+  id: string; // stable id built from main + sub
+  main: string; // Persian main category name (e.g., "لوازم آرایشی و بهداشتی")
+  sub: string; // Persian subcategory (e.g., "کرم مرطوب کننده")
 }
 
 interface Brand {
-  id: string;
-  name: string;
-  count: number;
-}
-
-interface TurkishBrand {
   id: string;
   name: string;
   count: number;
@@ -36,101 +32,114 @@ export default function SearchSidebar({
   currentQuery,
   totalProducts = 0,
   onFilterChange,
+  onItemSelected,
 }: SearchSidebarProps) {
   const router = useRouter();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedTurkishBrands, setSelectedTurkishBrands] = useState<string[]>(
-    []
-  );
-  const [turkishBrandSearch, setTurkishBrandSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [allCategories, setAllCategories] = useState<
+    Record<string, { name: string; categories: Record<string, string[]> }>
+  >({});
 
-  // Sample data - in real app this would come from API
-  const categories: Category[] = [
-    { id: "1", name: "لباس زنانه", count: 245 },
-    { id: "2", name: "لباس مردانه", count: 189 },
-    { id: "3", name: "کفش", count: 156 },
-    { id: "4", name: "لوازم آرایشی", count: 134 },
-    { id: "5", name: "ساعت مچی", count: 98 },
-    { id: "6", name: "کیف دستی", count: 87 },
-    { id: "7", name: "لوازم الکترونیکی", count: 76 },
-    { id: "8", name: "اسباب بازی", count: 65 },
-  ];
+  // Load all category definitions (Persian) from our API
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/shopping/categories?type=all", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("خطا در دریافت دسته‌بندی‌ها");
+        }
+        const data = await response.json();
+        // data.categories is an object keyed by slug (e.g., beauty, electronics, ...)
+        setAllCategories(data.categories || {});
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "خطا در بارگذاری دسته‌بندی‌ها"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
-  // Turkish Brands - برندهای معروف ترکیه
-  const turkishBrands: TurkishBrand[] = [
-    { id: "turkish-1", name: "LC Waikiki", count: 156 },
-    { id: "turkish-2", name: "Koton", count: 142 },
-    { id: "turkish-3", name: "Mavi", count: 128 },
-    { id: "turkish-4", name: "DeFacto", count: 119 },
-    { id: "turkish-5", name: "Beymen", count: 98 },
-    { id: "turkish-6", name: "Trendyol", count: 87 },
-    { id: "turkish-7", name: "Derimod", count: 76 },
-    { id: "turkish-8", name: "Hepsiburada", count: 65 },
-    { id: "turkish-9", name: "Kiğılı", count: 54 },
-    { id: "turkish-10", name: "Altınyıldız", count: 43 },
-    { id: "turkish-11", name: "Yargıcı", count: 38 },
-    { id: "turkish-12", name: "Gant", count: 32 },
-    { id: "turkish-13", name: "Pierre Cardin", count: 29 },
-    { id: "turkish-14", name: "Colins", count: 26 },
-    { id: "turkish-15", name: "Jack & Jones", count: 24 },
-  ];
+  // Build grouped structure and also a flattened helper list
+  const { grouped, flat } = useMemo(() => {
+    const groups: Array<{
+      groupName: string;
+      mains: Array<{ main: string; subs: string[] }>;
+    }> = [];
+    const flatItems: CategoryItem[] = [];
 
-  const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    // If checking a category, uncheck all others and only select this one
+    Object.values(allCategories).forEach((group) => {
+      const groupName = group.name;
+      const mains: Array<{ main: string; subs: string[] }> = [];
+      Object.entries(group.categories || {}).forEach(([main, subs]) => {
+        mains.push({ main, subs });
+        subs.forEach((sub) => {
+          const id = `${groupName}-${main}-${sub}`;
+          flatItems.push({ id, main, sub });
+        });
+      });
+      groups.push({ groupName, mains });
+    });
+
+    return { grouped: groups, flat: flatItems };
+  }, [allCategories]);
+
+  const handleCategoryChange = (
+    categoryId: string,
+    checked: boolean,
+    main: string,
+    sub: string
+  ) => {
     if (checked) {
       setSelectedCategories([categoryId]);
-
-      const selectedCategory = categories.find(
-        (category) => category.id === categoryId
-      );
-      if (selectedCategory) {
-        // Navigate to search page with category filter
-        router.push(
-          `/search?category=${encodeURIComponent(selectedCategory.name)}&type=category`
-        );
-      }
+      // Build a query like "{main} {sub}" and navigate to /search
+      const searchQuery = `${main} ${sub}`;
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+      // If provided (mobile), close the sidebar immediately
+      onItemSelected?.();
     } else {
-      // If unchecking, clear all selections
       setSelectedCategories([]);
     }
 
     onFilterChange?.({
       categories: checked ? [categoryId] : [],
-      turkishBrands: selectedTurkishBrands,
     });
   };
 
-  const handleTurkishBrandChange = (brandId: string, checked: boolean) => {
-    // If checking a brand, uncheck all others and only select this one
-    if (checked) {
-      setSelectedTurkishBrands([brandId]);
+  // Filter groups by search term - keeps mains as bold text (no checkbox)
+  const filteredGroups = useMemo(() => {
+    const term = categorySearch.trim().toLowerCase();
+    if (!term) return grouped;
 
-      const selectedBrand = turkishBrands.find((brand) => brand.id === brandId);
-      if (selectedBrand) {
-        // Navigate to search page with Turkish brand filter
-        router.push(
-          `/search?brand=${encodeURIComponent(selectedBrand.name)}&type=turkish`
-        );
-      }
-    } else {
-      // If unchecking, clear all selections
-      setSelectedTurkishBrands([]);
-    }
-
-    onFilterChange?.({
-      categories: selectedCategories,
-      turkishBrands: checked ? [brandId] : [],
-    });
-  };
-
-  const filteredTurkishBrands = turkishBrands.filter((brand) =>
-    brand.name.toLowerCase().includes(turkishBrandSearch.toLowerCase())
-  );
-
-  const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(categorySearch.toLowerCase())
-  );
+    // Keep mains that match or have subs that match
+    return grouped
+      .map((g) => ({
+        groupName: g.groupName,
+        mains: g.mains
+          .map((m) => ({
+            main: m.main,
+            subs: m.subs.filter(
+              (s) =>
+                m.main.toLowerCase().includes(term) ||
+                s.toLowerCase().includes(term)
+            ),
+          }))
+          .filter(
+            (m) => m.main.toLowerCase().includes(term) || m.subs.length > 0
+          ),
+      }))
+      .filter((g) => g.mains.length > 0);
+  }, [categorySearch, grouped]);
 
   return (
     <div className="w-80 bg-white border-l border-green-200 p-6 h-screen overflow-y-auto">
@@ -193,6 +202,15 @@ export default function SearchSidebar({
           </div>
         </div>
 
+        {loading && (
+          <div className="text-right text-sm text-gray-500 mb-2">
+            در حال بارگذاری دسته‌بندی‌ها...
+          </div>
+        )}
+        {error && (
+          <div className="text-right text-sm text-red-600 mb-2">{error}</div>
+        )}
+
         {/* Show All Categories Button - when a category is selected */}
         {selectedCategories.length > 0 && (
           <div className="mb-4">
@@ -201,7 +219,6 @@ export default function SearchSidebar({
                 setSelectedCategories([]);
                 onFilterChange?.({
                   categories: [],
-                  turkishBrands: selectedTurkishBrands,
                 });
               }}
               className="w-full px-3 py-2 text-sm text-green-700 border border-green-400 rounded-lg hover:bg-green-100 transition-colors font-medium"
@@ -211,136 +228,70 @@ export default function SearchSidebar({
           </div>
         )}
 
-        <div className="space-y-3">
-          {filteredCategories.map((category) => {
-            const isSelected = selectedCategories.includes(category.id);
-            const hasAnySelected = selectedCategories.length > 0;
+        <div className="space-y-5">
+          {filteredGroups.map((group) => (
+            <div key={group.groupName} className="space-y-3">
+              {group.mains.map((m) => (
+                <div key={`${group.groupName}-${m.main}`} className="space-y-2">
+                  {/* Main category title as bold text (no checkbox) */}
+                  <div className="text-right font-bold text-gray-800 pr-1">
+                    {m.main}
+                  </div>
 
-            // Show all categories if none selected, or only show the selected category
-            const shouldShow = !hasAnySelected || isSelected;
+                  {/* Sub items with checkboxes */}
+                  <div className="space-y-2">
+                    {m.subs.map((sub) => {
+                      const id = `${group.groupName}-${m.main}-${sub}`;
+                      const isSelected = selectedCategories.includes(id);
+                      const hasAnySelected = selectedCategories.length > 0;
+                      const shouldShow = !hasAnySelected || isSelected;
+                      if (!shouldShow) return null;
 
-            if (!shouldShow) return null;
-
-            return (
-              <div
-                key={category.id}
-                className="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 transition-colors"
-              >
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Checkbox
-                    id={`category-${category.id}`}
-                    checked={isSelected}
-                    onCheckedChange={(checked) =>
-                      handleCategoryChange(category.id, checked as boolean)
-                    }
-                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                  />
-                  <label
-                    htmlFor={`category-${category.id}`}
-                    className="text-sm text-gray-700 cursor-pointer flex-1 text-right"
-                  >
-                    {category.name}
-                  </label>
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Checkbox
+                              id={`category-${id}`}
+                              checked={isSelected}
+                              onCheckedChange={(checked) =>
+                                handleCategoryChange(
+                                  id,
+                                  checked as boolean,
+                                  m.main,
+                                  sub
+                                )
+                              }
+                              className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                            />
+                            <label
+                              htmlFor={`category-${id}`}
+                              className="text-sm text-gray-700 cursor-pointer flex-1 text-right"
+                            >
+                              {sub}
+                            </label>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500">
-                  ({category.count})
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Turkish Brands Section - برندهای معروف ترکیه */}
-      <div className="mb-8">
-        <h3 className="font-bold text-green-800 mb-4 text-right">
-          برندهای معروف ترکیه
-        </h3>
-        {/* <p className="text-xs text-gray-500 mb-4 text-right">
-          برای انتخاب برند، روی checkbox کلیک کنید
-        </p> */}
-
-        {/* Turkish Brand Search */}
-        <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="جستجوی برند ترکیه"
-              value={turkishBrandSearch}
-              onChange={(e) => setTurkishBrandSearch(e.target.value)}
-              className="pl-10 text-right"
-              dir="rtl"
-            />
-          </div>
-        </div>
-
-        {/* Show All Brands Button - when a brand is selected */}
-        {selectedTurkishBrands.length > 0 && (
-          <div className="mb-4">
-            <button
-              onClick={() => {
-                setSelectedTurkishBrands([]);
-                onFilterChange?.({
-                  categories: selectedCategories,
-                  turkishBrands: [],
-                });
-              }}
-              className="w-full px-3 py-2 text-sm text-green-700 border border-green-400 rounded-lg hover:bg-green-100 transition-colors font-medium"
-            >
-              نمایش همه برندها
-            </button>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          {filteredTurkishBrands.map((brand) => {
-            const isSelected = selectedTurkishBrands.includes(brand.id);
-            const hasAnySelected = selectedTurkishBrands.length > 0;
-
-            // Show all brands if none selected, or only show the selected brand
-            const shouldShow = !hasAnySelected || isSelected;
-
-            if (!shouldShow) return null;
-
-            return (
-              <div
-                key={brand.id}
-                className="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 transition-colors"
-              >
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Checkbox
-                    id={`turkish-brand-${brand.id}`}
-                    checked={isSelected}
-                    onCheckedChange={(checked) =>
-                      handleTurkishBrandChange(brand.id, checked as boolean)
-                    }
-                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                  />
-                  <label
-                    htmlFor={`turkish-brand-${brand.id}`}
-                    className="text-sm text-gray-700 cursor-pointer flex-1 text-right"
-                  >
-                    {brand.name}
-                  </label>
-                </div>
-                <span className="text-xs text-gray-500">({brand.count})</span>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Clear Filters Button */}
-      {(selectedCategories.length > 0 || selectedTurkishBrands.length > 0) && (
+      {selectedCategories.length > 0 && (
         <div className="mt-6">
           <button
             onClick={() => {
               setSelectedCategories([]);
-              setSelectedTurkishBrands([]);
               onFilterChange?.({
                 categories: [],
-                turkishBrands: [],
               });
             }}
             className="w-full px-4 py-2 text-sm text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-colors"

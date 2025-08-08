@@ -166,16 +166,7 @@ export default function VitaminDropdown() {
               {Object.entries(categories).map(
                 ([mainCategory, subCategories]) => (
                   <div key={mainCategory} className="space-y-2">
-                    <h3
-                      className="font-bold text-base text-blue-700 border-b border-green-300 pb-1 mb-2"
-                      style={{ direction: "rtl", textAlign: "right" }}
-                    >
-                      {mainCategory}
-                    </h3>
-                    <div
-                      className="grid grid-cols-2 gap-1"
-                      style={{ direction: "rtl" }}
-                    >
+                    <div className="grid grid-cols-1 gap-1">
                       {subCategories.map((item) => (
                         <span
                           key={item}
