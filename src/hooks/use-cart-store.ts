@@ -21,11 +21,29 @@ interface CartState {
   updateItem: (item: OrderItem, quantity: number) => void;
   removeItem: (item: OrderItem) => void;
   clearCart: () => void;
+  replaceCart: (cart: Cart) => void;
 
   setShippingAddress: (shippingAddress: ShippingAddress) => void;
   setPaymentMethod: (paymentMethod: string) => void;
   setDeliveryDateIndex: (index: number) => void;
 }
+
+// Lightweight client-side saver to sync cart to server when authenticated.
+let saveTimer: any | null = null;
+const persistCartToServer = (cart: Cart) => {
+  try {
+    if (typeof window === "undefined") return;
+    if (!cart.items || cart.items.length === 0) return; // never overwrite with empty
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      fetch("/api/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cart),
+      }).catch(() => {});
+    }, 300);
+  } catch {}
+};
 
 const useCartStore = create(
   persist<CartState>(
@@ -71,6 +89,7 @@ const useCartStore = create(
             }),
           },
         });
+        persistCartToServer(get().cart);
         const foundItem = updatedCartItems.find(
           (x) =>
             x.product === item.product &&
@@ -108,6 +127,7 @@ const useCartStore = create(
             }),
           },
         });
+        persistCartToServer(get().cart);
       },
       removeItem: (item: OrderItem) => {
         const { items, shippingAddress } = get().cart;
@@ -127,6 +147,7 @@ const useCartStore = create(
             }),
           },
         });
+        persistCartToServer(get().cart);
       },
       setShippingAddress: (shippingAddress: ShippingAddress) => {
         const { items } = get().cart;
@@ -140,6 +161,7 @@ const useCartStore = create(
             }),
           },
         });
+        persistCartToServer(get().cart);
       },
       setPaymentMethod: (paymentMethod: string) => {
         set({
@@ -148,8 +170,9 @@ const useCartStore = create(
             paymentMethod,
           },
         });
+        persistCartToServer(get().cart);
       },
-              setDeliveryDateIndex: (index: number) => {
+      setDeliveryDateIndex: (index: number) => {
         const { items, shippingAddress } = get().cart;
 
         set({
@@ -162,13 +185,17 @@ const useCartStore = create(
             }),
           },
         });
+        persistCartToServer(get().cart);
       },
       clearCart: () => {
+        // Reset the entire cart back to its initial state
         set({
-          cart: {
-            ...get().cart,
-            items: [],
-          },
+          cart: initialState,
+        });
+      },
+      replaceCart: (cart: Cart) => {
+        set({
+          cart,
         });
       },
       init: () => set({ cart: initialState }),

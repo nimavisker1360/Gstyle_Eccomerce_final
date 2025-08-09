@@ -6,7 +6,7 @@ import Menu from "./menu";
 import data from "@/lib/data";
 import Search from "./search";
 import CartButton from "./cart-button";
-import UserButton from "./user-button";
+import UserButton from "./user-button-client";
 import FashionDropdown from "./fashion-dropdown";
 import BeautyDropdown from "./beauty-dropdown";
 import SportsDropdown from "./sports-dropdown";
