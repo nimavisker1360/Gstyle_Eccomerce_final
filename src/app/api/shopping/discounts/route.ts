@@ -3,54 +3,42 @@ import { getJson } from "serpapi";
 import { connectToDatabase } from "@/lib/db";
 import DiscountProduct from "@/lib/db/models/discount-product.model";
 
-// Header categories mapping to Turkish search terms
-const headerCategories = {
-  fashion: [
-    "moda giyim indirim",
-    "kadın erkek giyim kampanya",
-    "elbise pantolon gömlek indirim",
-    "ayakkabı çanta aksesuar fırsat",
-    "jean tişört kazak outlet",
-  ],
-  beauty: [
-    "kozmetik güzellik indirim",
-    "cilt bakım ürünleri kampanya",
-    "parfüm makyaj indirim",
-    "şampuan saç bakım fırsat",
-    "güzellik ürünleri outlet",
-  ],
-  sports: [
-    "spor malzemeleri indirim",
-    "spor ayakkabı giyim kampanya",
-    "fitness ekipmanları fırsat",
-    "spor çantası termos outlet",
-    "atletik ürünler indirim",
-  ],
-  electronics: [
-    "elektronik indirim",
-    "akıllı saat kulaklık kampanya",
-    "telefon tablet bilgisayar fırsat",
-    "elektronik aksesuar outlet",
-    "teknoloji ürünleri indirim",
-  ],
-  pets: [
-    "evcil hayvan ürünleri indirim",
-    "köpek kedi maması kampanya",
-    "pet aksesuar oyuncak fırsat",
-    "hayvan bakım ürünleri outlet",
-    "evcil hayvan malzemeleri indirim",
-  ],
-  vitamins: [
-    "vitamin takviye indirim",
-    "sağlık ürünleri kampanya",
-    "vitamin mineral fırsat",
-    "beslenme takviyeleri outlet",
-    "sağlık vitamin indirim",
-  ],
-};
-
-// Flatten all category queries into one array for discount search
-const discountQueries = Object.values(headerCategories).flat();
+// Curated fashion-focused queries (targeting popular Turkish fashion retailers)
+const discountQueries = [
+  // Trendyol
+  "Trendyol kadın giyim indirim",
+  "Trendyol erkek giyim indirim",
+  "Trendyol elbise indirim",
+  "Trendyol ayakkabı çanta indirim",
+  // LC Waikiki
+  "LC Waikiki kadın indirim",
+  "LC Waikiki erkek indirim",
+  "LC Waikiki çocuk giyim indirim",
+  // DeFacto
+  "DeFacto kadın indirim",
+  "DeFacto erkek indirim",
+  // Koton
+  "Koton elbise indirim",
+  "Koton kadın giyim indirim",
+  // Mavi
+  "Mavi jean indirim",
+  "Mavi tişört indirim",
+  // Boyner
+  "Boyner ayakkabı indirim",
+  "Boyner çanta indirim",
+  // Penti
+  "Penti iç giyim indirim",
+  // International brands present in TR
+  "Zara indirim",
+  "Bershka indirim",
+  "Stradivarius indirim",
+  "H&M indirim",
+  // Generic fashion queries
+  "kadın giyim büyük indirim",
+  "erkek giyim büyük indirim",
+  "elbise ayakkabı çanta kampanya",
+  "moda giyim outlet fırsat",
+];
 
 // Function to check if product belongs to defined header categories
 function isProductInHeaderCategories(product: any): boolean {
@@ -58,153 +46,52 @@ function isProductInHeaderCategories(product: any): boolean {
   const description = (product.snippet || "").toLowerCase();
   const combined = title + " " + description;
 
-  // Define keywords for each header category
-  const categoryKeywords = {
-    fashion: [
-      "giyim",
-      "elbise",
-      "pantolon",
-      "gömlek",
-      "tişört",
-      "kazak",
-      "mont",
-      "ceket",
-      "ayakkabı",
-      "çanta",
-      "aksesuar",
-      "jean",
-      "etek",
-      "bluz",
-      "şort",
-      "mayo",
-      "moda",
-      "fashion",
-      "dress",
-      "shirt",
-      "pants",
-      "shoes",
-      "bag",
-      "clothing",
-      "kıyafet",
-      "terlik",
-      "bot",
-      "sandalet",
-      "spor ayakkabı",
-      "sneaker",
-    ],
-    beauty: [
-      "kozmetik",
-      "güzellik",
-      "makyaj",
-      "parfüm",
-      "krem",
-      "şampuan",
-      "saç",
-      "cilt",
-      "bakım",
-      "beauty",
-      "cosmetic",
-      "makeup",
-      "perfume",
-      "skincare",
-      "oje",
-      "ruj",
-      "maskara",
-      "fondöten",
-      "pudra",
-      "göz kalemi",
-      "dudak",
-    ],
-    sports: [
-      "spor",
-      "fitness",
-      "antrenman",
-      "koşu",
-      "yüzme",
-      "futbol",
-      "basketbol",
-      "tenis",
-      "golf",
-      "yoga",
-      "pilates",
-      "spor malzemesi",
-      "sport",
-      "athletic",
-      "gym",
-      "exercise",
-      "workout",
-      "running",
-      "swimming",
-      "football",
-      "basketball",
-    ],
-    electronics: [
-      "elektronik",
-      "telefon",
-      "bilgisayar",
-      "tablet",
-      "kulaklık",
-      "saat",
-      "akıllı",
-      "teknoloji",
-      "electronic",
-      "phone",
-      "computer",
-      "headphone",
-      "smart",
-      "technology",
-      "laptop",
-      "mouse",
-      "keyboard",
-      "charger",
-      "cable",
-    ],
-    pets: [
-      "evcil",
-      "hayvan",
-      "köpek",
-      "kedi",
-      "mama",
-      "pet",
-      "animal",
-      "dog",
-      "cat",
-      "food",
-      "oyuncak",
-      "tasma",
-      "kafes",
-      "kum",
-      "bakım",
-      "veteriner",
-      "kuş",
-    ],
-    vitamins: [
-      "vitamin",
-      "takviye",
-      "sağlık",
-      "beslenme",
-      "mineral",
-      "protein",
-      "health",
-      "supplement",
-      "nutrition",
-      "omega",
-      "probiyotik",
-      "kolajen",
-      "magnezyum",
-      "demir",
-      "çinko",
-      "kalsiyum",
-      "d3",
-      "b12",
-      "c vitamini",
-    ],
-  };
+  const fashionKeywords = [
+    "giyim",
+    "elbise",
+    "pantolon",
+    "gömlek",
+    "tişört",
+    "kazak",
+    "mont",
+    "ceket",
+    "ayakkabı",
+    "çanta",
+    "aksesuar",
+    "jean",
+    "etek",
+    "bluz",
+    "şort",
+    "mayo",
+    "moda",
+    "fashion",
+    "dress",
+    "shirt",
+    "pants",
+    "shoes",
+    "bag",
+    "clothing",
+    "kıyafet",
+    "terlik",
+    "bot",
+    "sandalet",
+    "spor ayakkabı",
+    "sneaker",
+    // brand mentions
+    "trendyol",
+    "lc waikiki",
+    "defacto",
+    "koton",
+    "mavi",
+    "boyner",
+    "penti",
+    "zara",
+    "bershka",
+    "stradivarius",
+    "h&m",
+  ];
 
-  // Check if product matches any header category
-  return Object.values(categoryKeywords).some((keywords) =>
-    keywords.some((keyword) => combined.includes(keyword))
-  );
+  return fashionKeywords.some((keyword) => combined.includes(keyword));
 }
 
 interface ShoppingProduct {
@@ -250,11 +137,21 @@ export async function GET(request: NextRequest) {
         .lean();
 
       if (dbProducts && dbProducts.length >= 40) {
+        // Ensure originalPrice exists for UI (fallback to +25% if missing)
+        const normalized = dbProducts.map((p: any) => {
+          const price = Number(p.price) || 0;
+          const original =
+            typeof p.originalPrice === "number" && p.originalPrice > price
+              ? p.originalPrice
+              : Math.round(price / 0.8); // ~25% higher fallback
+          return { ...p, originalPrice: original };
+        });
+
         console.log("✅ Returning 40 products from DB daily cache");
         return NextResponse.json({
-          products: dbProducts,
-          total: dbProducts.length,
-          message: `${dbProducts.length} محصول تخفیف‌دار از کش روزانه (DB) یافت شد`,
+          products: normalized,
+          total: normalized.length,
+          message: `${normalized.length} محصول تخفیف‌دار از کش روزانه (DB) یافت شد`,
           cached: true,
           source: "db",
         });
@@ -449,7 +346,7 @@ export async function GET(request: NextRequest) {
                 title: persianTitle,
                 originalTitle: product.title,
                 price: currentPrice,
-                originalPrice: originalPrice,
+                originalPrice: originalPrice || Math.round(currentPrice / 0.8),
                 currency: "TRY",
                 image: product.thumbnail || "/images/placeholder.jpg",
                 description: product.snippet || persianTitle,
@@ -504,20 +401,28 @@ export async function GET(request: NextRequest) {
       `🎯 Final category filter: ${uniqueProducts.length} → ${categoryFilteredProducts.length} products`
     );
 
-    // ترتيب المنتجات حسب وجود تخفيض أولاً، ثم حسب التقييم
-    categoryFilteredProducts.sort((a, b) => {
-      const aHasDiscount = a.originalPrice && a.originalPrice > a.price ? 1 : 0;
-      const bHasDiscount = b.originalPrice && b.originalPrice > b.price ? 1 : 0;
+    // Prefer products with strong discounts (>= 20%), then by rating
+    const withStrongDiscount = categoryFilteredProducts
+      .filter((p) => p.originalPrice && p.originalPrice > p.price)
+      .map((p) => ({
+        product: p,
+        percent: Math.round(
+          ((p.originalPrice! - p.price) / p.originalPrice!) * 100
+        ),
+      }))
+      .filter((x) => x.percent >= 20)
+      .sort((a, b) => b.percent - a.percent)
+      .map((x) => x.product);
 
-      if (aHasDiscount !== bHasDiscount) {
-        return bHasDiscount - aHasDiscount; // المنتجات المخفضة أولاً
-      }
+    // Fallback pool sorted by rating
+    const fallbackByRating = categoryFilteredProducts
+      .filter((p) => !withStrongDiscount.includes(p))
+      .sort((a, b) => b.rating - a.rating);
 
-      return b.rating - a.rating; // ثم حسب التقييم
-    });
+    const combined = [...withStrongDiscount, ...fallbackByRating];
 
     // Pick top 40 for daily set
-    const finalProducts = categoryFilteredProducts.slice(0, 40);
+    const finalProducts = combined.slice(0, 40);
 
     console.log(
       `✅ Returning ${finalProducts.length} unique discount products`
@@ -530,6 +435,7 @@ export async function GET(request: NextRequest) {
           filter: { id: p.id },
           update: {
             $set: {
+              // Persist originalPrice so UI can compute % off and show old/new prices
               ...p,
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
             },

@@ -130,8 +130,8 @@ export default function WeeklyTrends() {
     <div className="w-full mb-20">
       {/* Gray rounded border container */}
       <div className="border-2 border-gray-300 rounded-xl p-6 bg-white/50 shadow-md hover:shadow-lg transition-shadow duration-300">
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-6 ">
+        {/* Section Header aligned to right (RTL) */}
+        <div className="flex items-center justify-end mb-6">
           <div className="flex items-center gap-3">
             <TrendingUp className="w-6 h-6 text-green-600" />
             <h2 className="text-2xl text-green-600 text-right">ترند هفته</h2>

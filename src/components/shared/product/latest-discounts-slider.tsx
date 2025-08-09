@@ -46,7 +46,7 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
         console.log("🔍 Fetching discount products from Google Shopping...");
 
         // Check client-side cache first
-        const cacheKey = "discountproducts_home_6";
+        const cacheKey = "discountproducts_home_8";
         const cacheExpiry = 10 * 60 * 1000; // 10 minutes
         const cached = localStorage.getItem(cacheKey);
         const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
@@ -198,29 +198,35 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
 
   return (
     <div className="w-full">
-      {/* Section Header (no title text) */}
-      <div className="flex items-center justify-end mb-6">
-        <Link href="/search?discount=true">
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
-          >
-            بیشتر ببینید
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-        </Link>
-      </div>
-
-      {/* Static Grid (6 products only) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-        {products.slice(0, 6).map((product, index) => (
-          <div key={`${product.id}-${index}`}>
-            <DiscountProductCard product={product} />
+      {/* Box container to keep header and grid inside */}
+      <div className="border-2 border-gray-300 rounded-xl p-4 md:p-6 bg-white/50 shadow-md">
+        {/* Section Header aligned right with green bold title */}
+        <div className="relative mb-6 flex items-center justify-end">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-green-600 text-right">
+            تخفیفات
+          </h2>
+          <div className="absolute left-0">
+            <Link href="/search?discount=true">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+              >
+                بیشتر ببینید
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Products count indicator removed as requested */}
+        {/* Static Grid with same breakpoints as "مشاهده بیشتر" صفحه */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-4">
+          {products.slice(0, 8).map((product, index) => (
+            <div key={`${product.id}-${index}`}>
+              <DiscountProductCard product={product} />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

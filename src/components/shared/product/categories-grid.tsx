@@ -122,20 +122,22 @@ export default function CategoriesGrid() {
     <div className="w-full mb-20">
       {/* Gray rounded border container */}
       <div className="border-2 border-gray-300 rounded-xl p-6 bg-white/50 shadow-md hover:shadow-lg transition-shadow duration-300">
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl text-green-600 text-right">
+        {/* Section Header aligned right with green bold title */}
+        <div className="relative mb-6 flex items-center justify-end">
+          <h2 className="text-2xl md:text-2xl font-extrabold text-green-600 text-right">
             دسته‌بندی‌های محصولات
           </h2>
-          {/* <Link href="/search">
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
-            >
-              بیشتر ببینید
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          </Link> */}
+          <div className="absolute left-0">
+            <Link href="/search">
+              {/* <Button
+                variant="outline"
+                className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+              >
+                بیشتر ببینید
+                <ChevronLeft className="w-4 h-4" />
+              </Button> */}
+            </Link>
+          </div>
         </div>
 
         {/* Static Grid (6 categories only) */}

@@ -25,10 +25,9 @@ export default function BrandsShowcase() {
       className="w-full py-12 bg-white flex flex-col items-center overflow-hidden border-2 border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
     >
       <h2
-        className="text-2xl md:text-3xl font-bold mb-8 text-center"
+        className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-green-600"
         style={{
           fontFamily: "BYekan",
-          color: "#3b4d39",
         }}
       >
         برندها

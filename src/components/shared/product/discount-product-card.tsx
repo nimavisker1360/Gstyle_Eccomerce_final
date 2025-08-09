@@ -44,17 +44,21 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
   const { addItem } = useCartStore();
   const [isAddedToCart, setIsAddedToCart] = useState(false);
 
-  // Base price in Toman (from TRY input)
-  const originalPriceToman = convertTRYToToman(product.price);
-  const discountAmountToman = 100000; // fixed 100,000 Toman off
-  const discountedPriceToman = Math.max(
-    0,
-    originalPriceToman - discountAmountToman
-  );
-  const discountPercent =
-    originalPriceToman > 0
-      ? Math.round((discountAmountToman / originalPriceToman) * 100)
-      : 0;
+  // Price computations
+  const displayedPriceToman = convertTRYToToman(product.price);
+  const originalPriceToman =
+    typeof product.originalPrice === "number"
+      ? convertTRYToToman(product.originalPrice)
+      : null;
+  const hasDiscount =
+    typeof product.originalPrice === "number" &&
+    product.originalPrice > product.price;
+  const discountPercent = hasDiscount
+    ? Math.round(
+        ((product.originalPrice! - product.price) / product.originalPrice!) *
+          100
+      )
+    : 0;
 
   // Render star rating
   const renderStars = (rating: number) => {
@@ -125,10 +129,12 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
             />
           </div>
 
-          {/* Circular Discount Badge */}
-          <div className="absolute top-2 left-2 bg-red-500 text-white w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shadow-md">
-            {discountPercent}%
-          </div>
+          {/* Percent badge on image (top-left) */}
+          {hasDiscount && (
+            <div className="absolute top-2 left-2 text-red-600 bg-white/90 border border-red-200 px-2 py-0.5 rounded text-xs font-bold shadow-sm">
+              %{discountPercent}
+            </div>
+          )}
 
           {/* Add to Cart Button */}
           <div className="absolute top-2 right-2">
@@ -173,22 +179,18 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
           <span className="text-xs text-gray-500">({product.reviews})</span>
         </div>
 
-        {/* Prices */}
-        <div className="space-y-1 text-right">
-          {/* Original price with strikethrough - bigger and black */}
-          <div className="text-base text-black line-through">
-            {formatToman(originalPriceToman)}
-          </div>
-          {/* New discounted price (100 Toman off) */}
-          <div className="text-sm font-bold text-green-600">
-            {formatToman(discountedPriceToman)}
-          </div>
-
-          {/* Delivery Info */}
-          {product.delivery && (
-            <div className="text-xs text-gray-500">{product.delivery}</div>
+        {/* Price column: old (Rial) above, new (Toman) below */}
+        <div className="flex flex-col items-end text-right gap-1">
+          {hasDiscount && (
+            <span className="text-xs md:text-sm text-gray-500 line-through tabular-nums">
+              {formatToman(originalPriceToman!)}
+            </span>
           )}
+          <span className="text-sm md:text-base font-bold text-red-600 tabular-nums">
+            {formatToman(displayedPriceToman)}
+          </span>
         </div>
+        {/* Delivery text removed as requested */}
 
         {/* Action Button - Hide when added to cart */}
         {!isAddedToCart && (
