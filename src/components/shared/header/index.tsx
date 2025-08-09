@@ -21,8 +21,8 @@ export default function Header() {
   return (
     <header className="bg-white text-gray-800 safe-area-inset-top">
       {/* Top Row - Main Header */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 md:border-b md:border-gray-200">
-        <div className="flex items-center justify-between max-w-7xl mx-auto border-b border-gray-200 md:border-none">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 shadow-[0_2px_6px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo - Left side */}
           <div className="flex items-center">
             <Link
@@ -48,7 +48,7 @@ export default function Header() {
           {/* Right Side Icons - Desktop */}
           <div className="hidden md:flex flex-col items-end gap-6">
             <span className="text-sm text-green-600 leading-none">
-             ارسال رایگان به سراسر کشور
+              ارسال رایگان به سراسر کشور
             </span>
             <div className="flex items-center gap-8">
               <UserButton />
@@ -59,7 +59,7 @@ export default function Header() {
           {/* Mobile Right Side - Cart and User */}
           <div className="md:hidden flex flex-col items-end gap-2">
             <span className="text-xs text-green-600 leading-none">
-            ارسال رایگان به سراسر کشور
+              ارسال رایگان به سراسر کشور
             </span>
             <div className="flex items-center gap-4">
               <CartButton />
@@ -80,7 +80,7 @@ export default function Header() {
       {/* Category Navigation Row */}
       <div className="px-4 sm:px-6 py-2 sm:py-3">
         <div className="max-w-7xl w-full mx-auto">
-          <div className="rounded-lg border border-blue-100 bg-blue-50 shadow-sm px-3 md:px-6 py-2">
+          <div className="px-3 md:px-6 py-2">
             <div className="hidden md:flex items-center justify-center gap-8 text-sm">
               <TelegramButton />
               {data.headerMenus.map((menu) =>
@@ -110,12 +110,18 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Divider between categories and brands - full width with shadow */}
+      <div className="w-full border-t border-gray-200 shadow-[0_2px_6px_rgba(0,0,0,0.08)]"></div>
+
       {/* Brands Strip - moved below categories */}
-      <div className="px-4 sm:px-6 py-2">
+      <div className="px-4 sm:px-6 py-2 bg-white">
         <div className="max-w-7xl w-full mx-auto">
           <BrandsStrip />
         </div>
       </div>
+
+      {/* Bottom shadow (no border) */}
+      <div className="w-full h-px bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06)]"></div>
     </header>
   );
 }

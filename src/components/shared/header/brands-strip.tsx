@@ -25,7 +25,7 @@ export default function BrandsStrip(): JSX.Element {
         {brandImages.map((img, idx) => (
           <div
             key={img}
-            className="shrink-0 w-9 h-9 sm:w-12 sm:h-12 rounded-xl border border-gray-200 bg-white shadow-sm p-1 sm:p-2"
+            className="shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl border border-gray-200 bg-white shadow-sm p-2 sm:p-3"
             style={{
               animation: `brand-fade-in-out ${2.5 + (idx % 3)}s ease-in-out infinite`,
             }}
@@ -33,8 +33,8 @@ export default function BrandsStrip(): JSX.Element {
             <Image
               src={`/images/brands/${img}`}
               alt={`brand-${img}`}
-              width={56}
-              height={56}
+              width={80}
+              height={80}
               className="w-full h-full object-contain"
               draggable={false}
               loading="lazy"
