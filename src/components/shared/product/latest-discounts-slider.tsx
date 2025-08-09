@@ -59,9 +59,13 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
             console.log(
               "✅ Using cached discount products for slider from localStorage"
             );
-            const cachedProducts = JSON.parse(cached);
+            const cachedProducts = JSON.parse(cached) as ShoppingProduct[];
+            const discountedOnly = cachedProducts.filter(
+              (p) =>
+                typeof p.originalPrice === "number" && p.originalPrice > p.price
+            );
             // Shuffle cached products for variety
-            const shuffledProducts = [...cachedProducts].sort(
+            const shuffledProducts = [...discountedOnly].sort(
               () => Math.random() - 0.5
             );
             setProducts(shuffledProducts);
@@ -80,14 +84,18 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
         const data = await response.json();
 
         if (data.products && Array.isArray(data.products)) {
+          const discountedOnly = (data.products as ShoppingProduct[]).filter(
+            (p) =>
+              typeof p.originalPrice === "number" && p.originalPrice > p.price
+          );
           // Shuffle products for additional randomization
-          const shuffledProducts = [...data.products].sort(
+          const shuffledProducts = [...discountedOnly].sort(
             () => Math.random() - 0.5
           );
           setProducts(shuffledProducts);
 
           // Cache the results
-          localStorage.setItem(cacheKey, JSON.stringify(data.products));
+          localStorage.setItem(cacheKey, JSON.stringify(discountedOnly));
           localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
 
           console.log(

@@ -22,6 +22,7 @@ interface ShoppingProduct {
   title: string;
   originalTitle?: string;
   price: number;
+  previousPrice?: number | null;
   originalPrice?: number | null;
   currency: string;
   image: string;
@@ -46,18 +47,18 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
 
   // Price computations
   const displayedPriceToman = convertTRYToToman(product.price);
-  const originalPriceToman =
-    typeof product.originalPrice === "number"
-      ? convertTRYToToman(product.originalPrice)
-      : null;
+  const basePrice: number | null =
+    typeof product.previousPrice === "number" && product.previousPrice > 0
+      ? product.previousPrice
+      : typeof product.originalPrice === "number" && product.originalPrice > 0
+        ? product.originalPrice
+        : null;
+  const basePriceToman =
+    basePrice !== null ? convertTRYToToman(basePrice) : null;
   const hasDiscount =
-    typeof product.originalPrice === "number" &&
-    product.originalPrice > product.price;
+    typeof basePrice === "number" && basePrice > product.price;
   const discountPercent = hasDiscount
-    ? Math.round(
-        ((product.originalPrice! - product.price) / product.originalPrice!) *
-          100
-      )
+    ? Math.round(((basePrice! - product.price) / basePrice!) * 100)
     : 0;
 
   // Render star rating
@@ -181,9 +182,9 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
 
         {/* Price column: old (Rial) above, new (Toman) below */}
         <div className="flex flex-col items-end text-right gap-1">
-          {hasDiscount && (
+          {hasDiscount && basePriceToman !== null && (
             <span className="text-xs md:text-sm text-gray-500 line-through tabular-nums">
-              {formatToman(originalPriceToman!)}
+              {formatToman(basePriceToman)}
             </span>
           )}
           <span className="text-sm md:text-base font-bold text-red-600 tabular-nums">

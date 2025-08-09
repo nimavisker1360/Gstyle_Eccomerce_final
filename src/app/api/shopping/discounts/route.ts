@@ -133,25 +133,35 @@ export async function GET(request: NextRequest) {
     if (!forceRefresh) {
       const dbProducts = await DiscountProduct.find({})
         .sort({ createdAt: -1 })
-        .limit(40)
+        .limit(100)
         .lean();
 
       if (dbProducts && dbProducts.length >= 40) {
-        // Ensure originalPrice exists for UI (fallback to +25% if missing)
-        const normalized = dbProducts.map((p: any) => {
-          const price = Number(p.price) || 0;
-          const original =
-            typeof p.originalPrice === "number" && p.originalPrice > price
-              ? p.originalPrice
-              : Math.round(price / 0.8); // ~25% higher fallback
-          return { ...p, originalPrice: original };
+        // Only keep truly discounted items (originalPrice > price OR previousPrice > price)
+        const discountedOnly = dbProducts.filter((p: any) => {
+          const price = Number(p.price || 0);
+          const hasOriginalDiscount =
+            typeof p.originalPrice === "number" &&
+            Number(p.originalPrice) > price;
+          const hasPreviousDiscount =
+            typeof p.previousPrice === "number" &&
+            Number(p.previousPrice) > price;
+          return hasOriginalDiscount || hasPreviousDiscount;
         });
 
-        console.log("✅ Returning 40 products from DB daily cache");
+        // Ensure originalPrice exists for UI when valid; do NOT fabricate discounts here
+        const normalized = discountedOnly.map((p: any) => ({
+          ...p,
+          originalPrice: p.originalPrice,
+        }));
+
+        console.log(
+          `✅ Returning ${normalized.length} discounted products from DB daily cache`
+        );
         return NextResponse.json({
-          products: normalized,
-          total: normalized.length,
-          message: `${normalized.length} محصول تخفیف‌دار از کش روزانه (DB) یافت شد`,
+          products: normalized.slice(0, 40),
+          total: Math.min(normalized.length, 40),
+          message: `${Math.min(normalized.length, 40)} محصول تخفیف‌دار از کش روزانه (DB) یافت شد`,
           cached: true,
           source: "db",
         });
@@ -346,7 +356,8 @@ export async function GET(request: NextRequest) {
                 title: persianTitle,
                 originalTitle: product.title,
                 price: currentPrice,
-                originalPrice: originalPrice || Math.round(currentPrice / 0.8),
+                // Do not fabricate originalPrice. Keep null if unknown so we can reliably detect real discounts
+                originalPrice: originalPrice ?? null,
                 currency: "TRY",
                 image: product.thumbnail || "/images/placeholder.jpg",
                 description: product.snippet || persianTitle,
@@ -419,10 +430,11 @@ export async function GET(request: NextRequest) {
       .filter((p) => !withStrongDiscount.includes(p))
       .sort((a, b) => b.rating - a.rating);
 
-    const combined = [...withStrongDiscount, ...fallbackByRating];
+    // Only keep products that truly have a discount
+    const discountedOnly = withStrongDiscount;
 
-    // Pick top 40 for daily set
-    const finalProducts = combined.slice(0, 40);
+    // Pick top 40 discounted products for daily set
+    const finalProducts = discountedOnly.slice(0, 40);
 
     console.log(
       `✅ Returning ${finalProducts.length} unique discount products`
@@ -430,6 +442,16 @@ export async function GET(request: NextRequest) {
 
     // 3) Upsert into DB as daily cache (ensure 40 stored)
     try {
+      // Map existing records to compute previousPrice
+      const ids = finalProducts.map((p) => p.id);
+      const existingRecords = await DiscountProduct.find({ id: { $in: ids } })
+        .select("id price previousPrice originalPrice")
+        .lean();
+      const idToExisting: Record<string, any> = Object.create(null);
+      for (const ex of existingRecords) {
+        idToExisting[ex.id] = ex;
+      }
+
       const bulkOps = finalProducts.map((p) => ({
         updateOne: {
           filter: { id: p.id },
@@ -437,6 +459,15 @@ export async function GET(request: NextRequest) {
             $set: {
               // Persist originalPrice so UI can compute % off and show old/new prices
               ...p,
+              // Set previousPrice to last stored price when price changes
+              previousPrice:
+                idToExisting[p.id] &&
+                typeof idToExisting[p.id].price === "number"
+                  ? idToExisting[p.id].price !== p.price
+                    ? idToExisting[p.id].price
+                    : (idToExisting[p.id].previousPrice ??
+                      idToExisting[p.id].price)
+                  : null,
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
             },
           },
@@ -446,6 +477,27 @@ export async function GET(request: NextRequest) {
       if (bulkOps.length > 0) {
         await DiscountProduct.bulkWrite(bulkOps, { ordered: false });
         console.log(`💾 Upserted ${bulkOps.length} discount products into DB`);
+      }
+
+      // Remove products that are no longer discounted or no longer present in the latest fetch
+      if (finalProducts.length > 0) {
+        const currentIds = finalProducts.map((p) => p.id);
+        const removalResult = await DiscountProduct.deleteMany({
+          id: { $nin: currentIds },
+        });
+        console.log(
+          `🗑️ Removed ${removalResult.deletedCount || 0} products no longer present in the latest discounts`
+        );
+
+        // Additionally, remove any records that no longer have a valid discount (safety net)
+        const invalidDiscountRemoval = await DiscountProduct.deleteMany({
+          $expr: { $not: { $gt: ["$originalPrice", "$price"] } },
+        });
+        if (invalidDiscountRemoval.deletedCount) {
+          console.log(
+            `🧹 Cleaned ${invalidDiscountRemoval.deletedCount} non-discounted records from DB`
+          );
+        }
       }
     } catch (e) {
       console.error("❌ Error upserting discount products to DB:", e);

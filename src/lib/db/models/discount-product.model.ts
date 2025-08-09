@@ -5,6 +5,7 @@ export interface IDiscountProduct extends Document {
   title: string;
   originalTitle?: string;
   price: number;
+  previousPrice?: number | null;
   originalPrice?: number | null;
   currency: string;
   image: string;
@@ -28,6 +29,7 @@ const discountProductSchema = new Schema<IDiscountProduct>(
     title: { type: String, required: true },
     originalTitle: { type: String },
     price: { type: Number, required: true },
+    previousPrice: { type: Number, default: null },
     originalPrice: { type: Number, default: null },
     currency: { type: String, default: "TRY" },
     image: { type: String, required: true },
