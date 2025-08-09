@@ -15,13 +15,14 @@ import PetsDropdown from "./pets-dropdown";
 import VitaminDropdown from "./vitamin-dropdown";
 import MobileCategoriesMenu from "./mobile-categories-menu";
 import TelegramButton from "./telegram-button";
+import BrandsStrip from "./brands-strip";
 
 export default function Header() {
   return (
     <header className="bg-white text-gray-800 safe-area-inset-top">
       {/* Top Row - Main Header */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 md:border-b md:border-gray-200">
+        <div className="flex items-center justify-between max-w-7xl mx-auto border-b border-gray-200 md:border-none">
           {/* Logo - Left side */}
           <div className="flex items-center">
             <Link
@@ -45,15 +46,25 @@ export default function Header() {
           </div>
 
           {/* Right Side Icons - Desktop */}
-          <div className="hidden md:flex items-center gap-6">
-            <UserButton />
-            <CartButton />
+          <div className="hidden md:flex flex-col items-end gap-2">
+            <span className="text-sm text-green-600 leading-none">
+             ارسال رایگان به سراسر کشور
+            </span>
+            <div className="flex items-center gap-8">
+              <UserButton />
+              <CartButton />
+            </div>
           </div>
 
           {/* Mobile Right Side - Cart and User */}
-          <div className="md:hidden flex items-center gap-3">
-            <CartButton />
-            <UserButton />
+          <div className="md:hidden flex flex-col items-end gap-2">
+            <span className="text-xs text-green-600 leading-none">
+            ارسال رایگان به سراسر کشور
+            </span>
+            <div className="flex items-center gap-4">
+              <CartButton />
+              <UserButton />
+            </div>
           </div>
         </div>
 
@@ -67,33 +78,42 @@ export default function Header() {
       </div>
 
       {/* Category Navigation Row */}
-      <div className="bg-gray-50 px-4 sm:px-6 py-2 sm:py-3">
-        <div className="flex items-center justify-center space-x-6 sm:space-x-8 text-sm max-w-7xl mx-auto">
-          <div className="hidden md:flex items-center space-x-8 text-sm">
-            <TelegramButton />
-            {data.headerMenus.map((menu) =>
-              menu.name === "مد و پوشاک" ? (
-                <FashionDropdown key={menu.href} />
-              ) : menu.name === "لوازم آرایشی و بهداشتی" ? (
-                <BeautyDropdown key={menu.href} />
-              ) : menu.name === "لوازم ورزشی" ? (
-                <SportsDropdown key={menu.href} />
-              ) : menu.name === "الکترونیک" ? (
-                <ElectronicsDropdown key={menu.href} />
-              ) : menu.name === "حیوانات خانگی" ? (
-                <PetsDropdown key={menu.href} />
-              ) : menu.name === "ویتامین و دارو" ? (
-                <VitaminDropdown key={menu.href} />
-              ) : (
-                <span
-                  key={menu.href}
-                  className="text-blue-700 hover:text-green-600 font-medium transition-colors cursor-pointer"
-                >
-                  {menu.name}
-                </span>
-              )
-            )}
+      <div className="px-4 sm:px-6 py-2 sm:py-3">
+        <div className="max-w-7xl w-full mx-auto">
+          <div className="rounded-lg border border-blue-100 bg-blue-50 shadow-sm px-3 md:px-6 py-2">
+            <div className="hidden md:flex items-center justify-center gap-8 text-sm">
+              <TelegramButton />
+              {data.headerMenus.map((menu) =>
+                menu.name === "مد و پوشاک" ? (
+                  <FashionDropdown key={menu.href} />
+                ) : menu.name === "لوازم آرایشی و بهداشتی" ? (
+                  <BeautyDropdown key={menu.href} />
+                ) : menu.name === "لوازم ورزشی" ? (
+                  <SportsDropdown key={menu.href} />
+                ) : menu.name === "الکترونیک" ? (
+                  <ElectronicsDropdown key={menu.href} />
+                ) : menu.name === "حیوانات خانگی" ? (
+                  <PetsDropdown key={menu.href} />
+                ) : menu.name === "ویتامین و دارو" ? (
+                  <VitaminDropdown key={menu.href} />
+                ) : (
+                  <span
+                    key={menu.href}
+                    className="text-blue-700 hover:text-green-600 font-medium transition-colors cursor-pointer"
+                  >
+                    {menu.name}
+                  </span>
+                )
+              )}
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Brands Strip - moved below categories */}
+      <div className="px-4 sm:px-6 py-2">
+        <div className="max-w-7xl w-full mx-auto">
+          <BrandsStrip />
         </div>
       </div>
     </header>

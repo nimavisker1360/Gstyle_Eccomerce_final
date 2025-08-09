@@ -147,13 +147,13 @@ export default function VitaminDropdown() {
 
       {/* Dropdown Menu */}
       <div
-        className={`absolute top-full left-0 mt-1 z-50 p-4 transition-all duration-300 ease-out ${
+        className={`absolute top-full right-0 mt-1 z-50 p-4 transition-all duration-300 ease-out ${
           isOpen
             ? "opacity-100 visible transform translate-y-0 scale-100"
             : "opacity-0 invisible transform -translate-y-2 scale-95 pointer-events-none"
         }`}
       >
-        <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-[300px] p-4">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-[420px] max-w-[95vw] p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-4">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
@@ -166,18 +166,24 @@ export default function VitaminDropdown() {
               {Object.entries(categories).map(
                 ([mainCategory, subCategories]) => (
                   <div key={mainCategory} className="space-y-2">
-                    <div className="grid grid-cols-1 gap-1">
-                      {subCategories.map((item) => (
-                        <span
-                          key={item}
-                          className="text-green-700 font-bold hover:text-blue-700 text-xs py-1 px-2 rounded hover:bg-blue-50 transition-colors cursor-pointer"
-                          onClick={() =>
-                            handleCategoryClick(mainCategory, item)
-                          }
-                        >
-                          <span className="truncate">{item}</span>
-                        </span>
-                      ))}
+                    <div className="text-blue-700 font-semibold text-sm border-b border-gray-200 pb-2 mb-2 text-right">
+                      {mainCategory}
+                    </div>
+                    <div className="relative" dir="rtl">
+                      <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-gray-200" />
+                      <div className="grid grid-cols-2 gap-2 px-2 text-right">
+                        {subCategories.map((item) => (
+                          <span
+                            key={item}
+                            className="block text-right text-green-700 font-bold hover:text-blue-700 text-xs py-1 px-2 rounded hover:bg-blue-50 transition-colors cursor-pointer"
+                            onClick={() =>
+                              handleCategoryClick(mainCategory, item)
+                            }
+                          >
+                            <span className="block truncate">{item}</span>
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )
