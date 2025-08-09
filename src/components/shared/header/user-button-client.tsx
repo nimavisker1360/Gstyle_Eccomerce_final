@@ -74,7 +74,10 @@ export default function UserButtonClient() {
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Link
-                  className={cn(buttonVariants(), "w-full")}
+                  className={cn(
+                    buttonVariants(),
+                    "w-full bg-green-600 hover:bg-green-700 text-white"
+                  )}
                   href="/sign-in"
                 >
                   ورود

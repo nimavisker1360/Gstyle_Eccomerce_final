@@ -106,7 +106,7 @@ export default function CredentialsSignInForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} dir="rtl">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
         <div className="space-y-6">
           <FormField
@@ -114,9 +114,13 @@ export default function CredentialsSignInForm() {
             name="email"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-right w-full">ایمیل</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter email address" {...field} />
+                  <Input
+                    className="text-right"
+                    placeholder="آدرس ایمیل را وارد کنید"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -128,11 +132,12 @@ export default function CredentialsSignInForm() {
             name="password"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-right w-full">رمز عبور</FormLabel>
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder="Enter password"
+                    className="text-right"
+                    placeholder="رمز عبور را وارد کنید"
                     {...field}
                   />
                 </FormControl>
@@ -144,15 +149,15 @@ export default function CredentialsSignInForm() {
           <div>
             <Button
               type="submit"
-              className="w-full flex items-center justify-center gap-2"
+              className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
             >
               Sign In
             </Button>
           </div>
-          <div className="text-sm">
-            By signing in, you agree to {APP_NAME}&apos;s{" "}
-            <Link href="/page/conditions-of-use">Conditions of Use</Link> and{" "}
-            <Link href="/page/privacy-policy">Privacy Notice.</Link>
+          <div className="text-sm text-right">
+            با انجام Sign In، با قوانین {APP_NAME} موافقت می‌کنید:{" "}
+            <Link href="/page/conditions-of-use">شرایط استفاده</Link> و{" "}
+            <Link href="/page/privacy-policy">سیاست حریم خصوصی</Link>.
           </div>
         </div>
       </form>

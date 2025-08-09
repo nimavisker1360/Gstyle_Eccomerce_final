@@ -10,7 +10,7 @@ export function GoogleSignInForm() {
     return (
       <Button
         disabled={pending}
-        className="w-full flex items-center justify-center gap-2"
+        className="w-full flex items-center justify-center gap-2 text-sky-700 border-sky-300"
         variant="outline"
       >
         {!pending && (
@@ -33,8 +33,8 @@ export function GoogleSignInForm() {
             />
           </svg>
         )}
-        <span>
-          {pending ? "Redirecting to Google..." : "Sign In with Google"}
+        <span className="text-right">
+          {pending ? "در حال انتقال به گوگل..." : "Sign In با گوگل"}
         </span>
       </Button>
     );

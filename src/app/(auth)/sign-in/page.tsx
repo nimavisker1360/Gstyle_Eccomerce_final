@@ -29,28 +29,38 @@ export default async function SignIn(props: {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full" dir="rtl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Sign In</CardTitle>
+          <CardTitle className="text-2xl text-center text-sky-700">
+            Sign In
+          </CardTitle>
         </CardHeader>
+
         <CardContent>
-          <div>
+          <div className="text-right">
             <CredentialsSignInForm />
           </div>
-          <SeparatorWithOr />
-          <div className="mt-4">
+
+          <div className="mt-4 text-right">
             <GoogleSignInForm />
+          </div>
+          <SeparatorWithOr />
+          <div className="mt-2">
+            <Link
+              className="hover:!no-underline no-underline"
+              href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+            >
+              <Button
+                className="w-full flex items-center justify-center gap-2 text-sky-700 border-sky-300"
+                variant="outline"
+              >
+                <span>ساخت حساب کاربری </span>
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
-      <SeparatorWithOr>New to {APP_NAME}?</SeparatorWithOr>
-
-      <Link href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
-        <Button className="w-full" variant="outline">
-          Create your {APP_NAME} account
-        </Button>
-      </Link>
     </div>
   );
 }
