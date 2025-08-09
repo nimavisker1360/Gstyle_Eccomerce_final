@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, ChevronRight, Plus } from "lucide-react";
+import { Search, Loader2, ChevronRight, Plus, SearchX } from "lucide-react";
 import ShoppingProductCard from "./shopping-product-card";
 import Link from "next/link";
 
@@ -48,6 +48,92 @@ export default function SearchProductsLayout({
   const [currentSearch, setCurrentSearch] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  // Excluded electronics items (case-insensitive match on title/description)
+  const EXCLUDED_ELECTRONICS_KEYWORDS = useMemo(
+    () => [
+      "گوشی موبایل",
+      "گوشی",
+      "موبایل",
+      "لپ تاپ",
+      "لپ‌تاپ",
+      "tablet",
+      "تبلت",
+      "computer",
+      // Turkish
+      "telefon",
+      "cep telefonu",
+      "akıllı telefon",
+      "bilgisayar",
+      "dizüstü bilgisayar",
+      "kamera",
+      "oyun konsolu",
+      "konsol",
+      "کامپیوتر",
+      "camera",
+      "دوربین",
+      "کنسول بازی",
+      "console",
+      "playstation",
+      "xbox",
+    ],
+    []
+  );
+
+  // Queries that should immediately return empty results
+  const EXCLUDED_QUERY_KEYWORDS = useMemo(
+    () => [
+      // Persian
+      "گوشی موبایل",
+      "گوشی",
+      "موبایل",
+      "لپ تاپ",
+      "لپ تاب",
+      "لپتاب",
+      "لپ‌تاپ",
+      "تبلت",
+      "کامپیوتر",
+      "دوربین",
+      "کنسول بازی",
+      // Turkish
+      "telefon",
+      "cep telefonu",
+      "akıllı telefon",
+      "bilgisayar",
+      "dizüstü bilgisayar",
+      "kamera",
+      "oyun konsolu",
+      "konsol",
+      // English
+      "smartphone",
+      "mobile phone",
+      "mobile",
+      "laptop",
+      "notebook",
+      "tablet",
+      "computer",
+      "pc ",
+      "camera",
+      "playstation",
+      "xbox",
+      "console",
+      "ps5",
+    ],
+    []
+  );
+
+  const filterExcludedProducts = useCallback(
+    (items: ShoppingProduct[] = []): ShoppingProduct[] => {
+      return items.filter((p) => {
+        const haystack =
+          `${p.title || ""} ${p.originalTitle || ""} ${p.description || ""} ${p.originalDescription || ""}`.toLowerCase();
+        return !EXCLUDED_ELECTRONICS_KEYWORDS.some((kw: string) =>
+          haystack.includes(kw.toLowerCase())
+        );
+      });
+    },
+    [EXCLUDED_ELECTRONICS_KEYWORDS]
+  );
 
   // Function to clear all search cache
   const clearSearchCache = () => {
@@ -190,10 +276,17 @@ export default function SearchProductsLayout({
     const electronicsKeywords = [
       "الکترونیک",
       "electronics",
+      "elektronik",
+      "elektronık",
       "موبایل",
       "mobile",
+      "smartphone",
+      "phone",
       "لپ تاپ",
+      "لپتاب",
+      "لپ‌تاپ",
       "laptop",
+      "notebook",
       "تبلت",
       "tablet",
       "هدفون",
@@ -202,7 +295,7 @@ export default function SearchProductsLayout({
       "smartwatch",
     ];
 
-    // مد و پوشاک - بررسی آخر برای جلوگیری از تداخل (بدون کلمات مشترک)
+    // مد و پوشاک - شامل کلمات مرتبط با کیف
     const fashionKeywords = [
       "مد",
       "پوشاک",
@@ -227,6 +320,10 @@ export default function SearchProductsLayout({
       "کت",
       "کیف",
       "کیف دستی",
+      "کیف شانه",
+      "چرم",
+      "çanta",
+      "canta",
       "jewelry",
       "جواهرات",
       "زیورآلات",
@@ -242,15 +339,16 @@ export default function SearchProductsLayout({
     ) {
       return "ویتامین و دارو";
     } else if (
-      electronicsKeywords.some((keyword) => lowerQuery.includes(keyword))
-    ) {
-      return "الکترونیک";
-    } else if (sportsKeywords.some((keyword) => lowerQuery.includes(keyword))) {
-      return "لوازم ورزشی";
-    } else if (
+      // اول مد و پوشاک برای جلوگیری از اشتباه در واژه‌هایی مثل "کیف"
       fashionKeywords.some((keyword) => lowerQuery.includes(keyword))
     ) {
       return "مد و پوشاک";
+    } else if (sportsKeywords.some((keyword) => lowerQuery.includes(keyword))) {
+      return "لوازم ورزشی";
+    } else if (
+      electronicsKeywords.some((keyword) => lowerQuery.includes(keyword))
+    ) {
+      return "الکترونیک";
     }
 
     // اگر هیچ کدام تطبیق نکرد، متن اصلی را کوتاه کن
@@ -269,6 +367,18 @@ export default function SearchProductsLayout({
       try {
         console.log(`🔍 Searching for: "${query}"`);
 
+        // If query contains excluded keywords, return no results
+        const lower = query.toLowerCase();
+        if (
+          EXCLUDED_QUERY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()))
+        ) {
+          console.log("🚫 Query is excluded by rules; showing no results.");
+          setProducts([]);
+          setLoading(false);
+          setMessage("");
+          return;
+        }
+
         // Check client-side cache first for regular searches
         // Create a more specific cache key that includes the exact query
         const cacheKey = `search:${encodeURIComponent(query.trim())}:${brandFilter || "none"}:${typeFilter || "none"}`;
@@ -286,7 +396,7 @@ export default function SearchProductsLayout({
               // Verify that the cached data is for the same query
               if (cachedData.query === query) {
                 console.log(`✅ Using cached search results for: "${query}"`);
-                setProducts(cachedData.products || []);
+                setProducts(filterExcludedProducts(cachedData.products) || []);
                 setMessage(cachedData.message || "");
                 setLoading(false);
                 return;
@@ -347,7 +457,7 @@ export default function SearchProductsLayout({
             error: data.error,
           });
 
-          setProducts(data.products || []);
+          setProducts(filterExcludedProducts(data.products) || []);
           setMessage(data.message || `محصولات برند ${brandFilter}`);
         } else {
           // Regular search
@@ -388,7 +498,8 @@ export default function SearchProductsLayout({
             error: data.error,
           });
 
-          setProducts(data.products || []);
+          const filtered = filterExcludedProducts(data.products);
+          setProducts(filtered || []);
           setMessage(data.message || "");
 
           // Show special message for sample data
@@ -402,7 +513,7 @@ export default function SearchProductsLayout({
           if (!brandFilter && !typeFilter && data.products) {
             const cacheData = {
               query: query, // Store the original query
-              products: data.products,
+              products: filtered,
               message: data.message || "",
               timestamp: Date.now(),
             };
@@ -461,7 +572,7 @@ export default function SearchProductsLayout({
         setLoading(false);
       }
     },
-    [brandFilter, typeFilter]
+    [brandFilter, typeFilter, filterExcludedProducts, EXCLUDED_QUERY_KEYWORDS]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -703,23 +814,50 @@ export default function SearchProductsLayout({
   const renderNoResults = () => {
     if (loading || products.length > 0 || error) return null;
 
+    const suggestions = [
+      "لباس زنانه",
+      "کفش ورزشی",
+      "لوازم آرایشی",
+      "ساعت مچی",
+      "کیف دستی",
+    ];
+
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">
-          هیچ محصولی برای &quot;{currentSearch}&quot; یافت نشد.
-        </p>
-        <p className="text-gray-400 text-sm mt-2">
-          لطفاً کلمات کلیدی دیگری امتحان کنید.
-        </p>
-        <div className="mt-4 text-sm text-gray-400">
-          <p>پیشنهادات جستجو:</p>
-          <ul className="mt-2 space-y-1">
-            <li>• لباس زنانه</li>
-            <li>• کفش ورزشی</li>
-            <li>• لوازم آرایشی</li>
-            <li>• ساعت مچی</li>
-            <li>• کیف دستی</li>
-          </ul>
+      <div className="flex justify-center py-10">
+        <div className="w-full max-w-2xl">
+          <div className="relative overflow-hidden rounded-2xl border border-green-100 bg-white shadow-lg">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-green-400 via-blue-500 to-purple-500" />
+
+            <div className="p-8 text-center" dir="rtl">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-50 to-blue-50 border border-green-200">
+                <SearchX className="h-7 w-7 text-green-600" />
+              </div>
+
+              <h3 className="text-2xl font-extrabold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                هیچ محصولی یافت نشد
+              </h3>
+              <p className="mt-2 text-sm text-gray-500">
+                برای عبارت «{currentSearch}» موردی پیدا نشد. لطفاً از پیشنهادات
+                زیر استفاده کنید یا عبارت دیگری را جستجو کنید.
+              </p>
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => handleSearch(s)}
+                    className="px-3 py-1.5 rounded-full text-sm border border-green-300 text-green-700 hover:bg-green-50 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 text-xs text-gray-400">
+                اگر فکر می‌کنید این پیام اشتباه است، عبارت کلی‌تری جستجو کنید.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

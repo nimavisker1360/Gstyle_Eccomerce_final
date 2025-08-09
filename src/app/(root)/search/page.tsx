@@ -143,14 +143,7 @@ function DiscountProductsContent({ searchQuery }: { searchQuery?: string }) {
           searchQuery={searchQuery}
         />
 
-        <div className="mt-8">
-          <SearchProductsLayout
-            telegramSupport={telegramSupport}
-            allowEmpty={true}
-            hideSearchBar={false}
-            initialQuery={searchQuery}
-          />
-        </div>
+        {/* Removed bottom search section (see more page cleanup) */}
       </div>
     </div>
   );

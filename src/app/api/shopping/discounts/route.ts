@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJson } from "serpapi";
-import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { connectToDatabase } from "@/lib/db";
+import DiscountProduct from "@/lib/db/models/discount-product.model";
 
 // Header categories mapping to Turkish search terms
 const headerCategories = {
@@ -237,17 +237,44 @@ const DISCOUNT_CACHE_TTL = 10 * 60 * 1000;
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("🔍 Starting discount products search...");
+    console.log("🔍 Starting discount products fetch...");
+    const url = new URL(request.url);
+    const forceRefresh = url.searchParams.get("refresh") === "true";
 
-    // Check cache first
+    // 1) Try DB (daily cache) first: limit 40 (unless forceRefresh)
+    await connectToDatabase();
+    if (!forceRefresh) {
+      const dbProducts = await DiscountProduct.find({})
+        .sort({ createdAt: -1 })
+        .limit(40)
+        .lean();
+
+      if (dbProducts && dbProducts.length >= 40) {
+        console.log("✅ Returning 40 products from DB daily cache");
+        return NextResponse.json({
+          products: dbProducts,
+          total: dbProducts.length,
+          message: `${dbProducts.length} محصول تخفیف‌دار از کش روزانه (DB) یافت شد`,
+          cached: true,
+          source: "db",
+        });
+      }
+    }
+
+    // 2) Fall back to in-memory cache
     const now = Date.now();
-    if (discountCache && now - discountCache.timestamp < discountCache.ttl) {
+    if (
+      !forceRefresh &&
+      discountCache &&
+      now - discountCache.timestamp < discountCache.ttl
+    ) {
       console.log("✅ Returning cached discount products");
       return NextResponse.json({
         products: discountCache.data,
         total: discountCache.data.length,
         message: `${discountCache.data.length} محصول تخفیف‌دار از کش یافت شد`,
         cached: true,
+        source: "memory",
       });
     }
 
@@ -489,14 +516,36 @@ export async function GET(request: NextRequest) {
       return b.rating - a.rating; // ثم حسب التقييم
     });
 
-    // الحد الأقصى 50 منتج
-    const finalProducts = categoryFilteredProducts.slice(0, 50);
+    // Pick top 40 for daily set
+    const finalProducts = categoryFilteredProducts.slice(0, 40);
 
     console.log(
       `✅ Returning ${finalProducts.length} unique discount products`
     );
 
-    // Cache the results
+    // 3) Upsert into DB as daily cache (ensure 40 stored)
+    try {
+      const bulkOps = finalProducts.map((p) => ({
+        updateOne: {
+          filter: { id: p.id },
+          update: {
+            $set: {
+              ...p,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            },
+          },
+          upsert: true,
+        },
+      }));
+      if (bulkOps.length > 0) {
+        await DiscountProduct.bulkWrite(bulkOps, { ordered: false });
+        console.log(`💾 Upserted ${bulkOps.length} discount products into DB`);
+      }
+    } catch (e) {
+      console.error("❌ Error upserting discount products to DB:", e);
+    }
+
+    // 4) Cache the results in memory
     discountCache = {
       data: finalProducts,
       timestamp: now,
@@ -511,6 +560,7 @@ export async function GET(request: NextRequest) {
           ? `${finalProducts.length} محصول تخفیف‌دار یافت شد`
           : "هیچ محصول تخفیف‌داری یافت نشد",
       cached: false,
+      source: "serpapi",
     });
   } catch (error) {
     console.error("❌ Error in discount products search:", error);

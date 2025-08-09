@@ -44,15 +44,17 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
   const { addItem } = useCartStore();
   const [isAddedToCart, setIsAddedToCart] = useState(false);
 
-  // Calculate discount percentage
+  // Base price in Toman (from TRY input)
+  const originalPriceToman = convertTRYToToman(product.price);
+  const discountAmountToman = 100000; // fixed 100,000 Toman off
+  const discountedPriceToman = Math.max(
+    0,
+    originalPriceToman - discountAmountToman
+  );
   const discountPercent =
-    product.originalPrice && product.originalPrice > product.price
-      ? Math.round(100 - (product.price / product.originalPrice) * 100)
-      : Math.floor(Math.random() * 30) + 10; // Random discount 10-40% if no original price
-
-  const formatTomanPrice = (priceTRY: number) => {
-    return formatToman(convertTRYToToman(priceTRY));
-  };
+    originalPriceToman > 0
+      ? Math.round((discountAmountToman / originalPriceToman) * 100)
+      : 0;
 
   // Render star rating
   const renderStars = (rating: number) => {
@@ -123,10 +125,10 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
             />
           </div>
 
-          {/* Discount Badge */}
-          <Badge className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1">
-            ٪{discountPercent}
-          </Badge>
+          {/* Circular Discount Badge */}
+          <div className="absolute top-2 left-2 bg-red-500 text-white w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shadow-md">
+            {discountPercent}%
+          </div>
 
           {/* Add to Cart Button */}
           <div className="absolute top-2 right-2">
@@ -172,20 +174,19 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
         </div>
 
         {/* Prices */}
-        <div className="space-y-1">
-          {/* Original Price (crossed out) - only show if we have original price */}
-          {/* Original TRY price hidden per requirement */}
-
-          {/* Current Price */}
-          <div className="text-sm font-bold text-green-600 text-right">
-            {formatTomanPrice(priceInTRY)}
+        <div className="space-y-1 text-right">
+          {/* Original price with strikethrough - bigger and black */}
+          <div className="text-base text-black line-through">
+            {formatToman(originalPriceToman)}
+          </div>
+          {/* New discounted price (100 Toman off) */}
+          <div className="text-sm font-bold text-green-600">
+            {formatToman(discountedPriceToman)}
           </div>
 
           {/* Delivery Info */}
           {product.delivery && (
-            <div className="text-xs text-gray-500 text-right">
-              {product.delivery}
-            </div>
+            <div className="text-xs text-gray-500">{product.delivery}</div>
           )}
         </div>
 

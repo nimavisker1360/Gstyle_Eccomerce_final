@@ -46,7 +46,7 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
         console.log("🔍 Fetching discount products from Google Shopping...");
 
         // Check client-side cache first
-        const cacheKey = "latest_discounts_slider";
+        const cacheKey = "discountproducts_home_6";
         const cacheExpiry = 10 * 60 * 1000; // 10 minutes
         const cached = localStorage.getItem(cacheKey);
         const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
@@ -198,9 +198,8 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
 
   return (
     <div className="w-full">
-      {/* Section Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl text-green-600 text-right">آخرین تخفیف‌ها</h2>
+      {/* Section Header (no title text) */}
+      <div className="flex items-center justify-end mb-6">
         <Link href="/search?discount=true">
           <Button
             variant="outline"
@@ -221,13 +220,7 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
         ))}
       </div>
 
-      {/* Products count indicator */}
-      <div className="mt-4 text-center">
-        <span className="text-xs text-gray-500">
-          {Math.min(6, products.length)} محصول از {products.length} محصول
-          تخفیف‌دار
-        </span>
-      </div>
+      {/* Products count indicator removed as requested */}
     </div>
   );
 }

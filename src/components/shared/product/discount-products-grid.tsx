@@ -34,11 +34,7 @@ export default function DiscountProductsGrid({
   const [products, setProducts] = React.useState<ShoppingProduct[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = React.useState(0);
-
-  const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
+  const [refreshKey] = React.useState(0);
 
   React.useEffect(() => {
     const fetchProducts = async () => {
@@ -46,7 +42,7 @@ export default function DiscountProductsGrid({
         setLoading(true);
 
         // Check client-side cache first
-        const cacheKey = "discount_products";
+        const cacheKey = "discountproducts_all";
         const cacheExpiry = 8 * 60 * 1000; // 8 minutes
         const cached = localStorage.getItem(cacheKey);
         const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
@@ -248,29 +244,7 @@ export default function DiscountProductsGrid({
   return (
     <div className="w-full">
       {/* Header with refresh button */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-green-600">محصولات تخفیف‌دار</h2>
-        <button
-          onClick={handleRefresh}
-          disabled={loading}
-          className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          <svg
-            className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          {loading ? "در حال بارگیری..." : "محصولات جدید"}
-        </button>
-      </div>
+      {/* Header removed as requested */}
 
       {/* Products grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-4">

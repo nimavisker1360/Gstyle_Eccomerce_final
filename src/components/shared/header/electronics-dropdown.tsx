@@ -10,12 +10,7 @@ const defaultElectronicsCategories = {
     "ساعت هوشمند",
     "هدفون",
     "لوازم جانبی",
-    "گوشی موبایل",
-    "لپ تاپ",
-    "تبلت",
-    "کامپیوتر",
-    "دوربین",
-    "کنسول بازی",
+    // Removed per requirement: گوشی موبایل، لپ تاپ، تبلت، کامپیوتر، دوربین، کنسول بازی
     "اسپیکر",
     "کیف و کاور",
     "شارژر",
@@ -23,6 +18,26 @@ const defaultElectronicsCategories = {
     "کارت حافظه",
   ],
 };
+
+// Items that should not be displayed in electronics dropdown
+const EXCLUDED_ELECTRONICS_ITEMS: string[] = [
+  "گوشی موبایل",
+  "لپ تاپ",
+  "تبلت",
+  "کامپیوتر",
+  "دوربین",
+  "کنسول بازی",
+];
+
+function applyExclusions(categories: ElectronicsCategory): ElectronicsCategory {
+  const filtered: ElectronicsCategory = {};
+  for (const [group, items] of Object.entries(categories)) {
+    filtered[group] = items.filter(
+      (item) => !EXCLUDED_ELECTRONICS_ITEMS.includes(item)
+    );
+  }
+  return filtered;
+}
 
 interface ElectronicsCategory {
   [key: string]: string[];
@@ -55,7 +70,7 @@ export default function ElectronicsDropdown() {
         if (now - timestamp < CACHE_EXPIRY) {
           console.log("✅ Using cached electronics categories");
           const cachedData = JSON.parse(cached);
-          setCategories(cachedData);
+          setCategories(applyExclusions(cachedData));
           return;
         }
       }
@@ -72,7 +87,9 @@ export default function ElectronicsDropdown() {
         const data = await response.json();
 
         // Extract categories from API response or use default
-        const apiCategories = data.categories || defaultElectronicsCategories;
+        const apiCategories = applyExclusions(
+          data.categories || defaultElectronicsCategories
+        );
 
         // Cache the results
         localStorage.setItem(CACHE_KEY, JSON.stringify(apiCategories));
@@ -82,11 +99,11 @@ export default function ElectronicsDropdown() {
         setCategories(apiCategories);
       } else {
         console.log("⚠️ Using default electronics categories");
-        setCategories(defaultElectronicsCategories);
+        setCategories(applyExclusions(defaultElectronicsCategories));
       }
     } catch (error) {
       console.error("❌ Error loading electronics categories:", error);
-      setCategories(defaultElectronicsCategories);
+      setCategories(applyExclusions(defaultElectronicsCategories));
     } finally {
       setIsLoading(false);
     }

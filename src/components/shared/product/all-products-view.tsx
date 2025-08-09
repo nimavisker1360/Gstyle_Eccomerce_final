@@ -47,6 +47,83 @@ export default function AllProductsView({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  // Excluded electronics items (case-insensitive)
+  const EXCLUDED_ELECTRONICS_KEYWORDS: string[] = [
+    "گوشی موبایل",
+    "گوشی",
+    "موبایل",
+    "لپ تاپ",
+    "لپ‌تاپ",
+    "tablet",
+    "تبلت",
+    "computer",
+    // Turkish
+    "telefon",
+    "cep telefonu",
+    "akıllı telefon",
+    "bilgisayar",
+    "dizüstü bilgisayar",
+    "kamera",
+    "oyun konsolu",
+    "konsol",
+    "کامپیوتر",
+    "camera",
+    "دوربین",
+    "کنسول بازی",
+    "console",
+    "playstation",
+    "xbox",
+  ];
+
+  // Queries that should immediately yield no results
+  const EXCLUDED_QUERY_KEYWORDS: string[] = [
+    // Persian
+    "گوشی موبایل",
+    "گوشی",
+    "موبایل",
+    "لپ تاپ",
+    "لپ‌تاپ",
+    "تبلت",
+    "کامپیوتر",
+    "دوربین",
+    "کنسول بازی",
+    // Turkish
+    "telefon",
+    "cep telefonu",
+    "akıllı telefon",
+    "bilgisayar",
+    "dizüstü bilgisayar",
+    "kamera",
+    "oyun konsolu",
+    "konsol",
+    // English
+    "smartphone",
+    "mobile phone",
+    "mobile",
+    "laptop",
+    "notebook",
+    "tablet",
+    "computer",
+    "pc ",
+    "camera",
+    "playstation",
+    "xbox",
+    "console",
+    "ps5",
+  ];
+
+  const filterExcludedProducts = (
+    items: ShoppingProduct[] = []
+  ): ShoppingProduct[] => {
+    return items.filter((p) => {
+      const haystack =
+        `${p.title || ""} ${p.originalTitle || ""} ${p.description || ""} ${p.originalDescription || ""}`.toLowerCase();
+      return !EXCLUDED_ELECTRONICS_KEYWORDS.some((kw) =>
+        haystack.includes(kw.toLowerCase())
+      );
+    });
+  };
+
   // تشخیص نوع کتگوری و کوتاه کردن متن نمایشی
   const getDisplayText = (query: string) => {
     const lowerQuery = query.toLowerCase();
@@ -204,6 +281,18 @@ export default function AllProductsView({
       try {
         console.log(`🔍 Searching for: "${query}"`);
 
+        // If query contains excluded keywords, return no results
+        const lower = query.toLowerCase();
+        if (
+          EXCLUDED_QUERY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()))
+        ) {
+          console.log("🚫 Query is excluded by rules; showing no results.");
+          setProducts([]);
+          setLoading(false);
+          setMessage("");
+          return;
+        }
+
         // Check if this is a Turkish brand search
         if (brandFilter && typeFilter === "turkish") {
           console.log(`🇹🇷 Turkish brand search for: ${brandFilter}`);
@@ -224,7 +313,7 @@ export default function AllProductsView({
             throw new Error(data.error || "خطا در دریافت محصولات برند ترکیه");
           }
 
-          setProducts(data.products || []);
+          setProducts(filterExcludedProducts(data.products) || []);
           setMessage(data.message || `محصولات برند ${brandFilter}`);
         } else {
           // Regular search
@@ -244,7 +333,7 @@ export default function AllProductsView({
             throw new Error(data.error || "خطا در دریافت اطلاعات");
           }
 
-          setProducts(data.products || []);
+          setProducts(filterExcludedProducts(data.products) || []);
           setMessage(data.message || "");
 
           // Log search results for debugging
