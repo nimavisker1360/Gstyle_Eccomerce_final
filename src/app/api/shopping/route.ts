@@ -3,6 +3,7 @@ import { getJson } from "serpapi";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { connectToDatabase } from "@/lib/db";
+import { getTurkishKeywordsForPersianQuery } from "@/lib/tr-fa-mapping";
 import GoogleShoppingProduct from "@/lib/db/models/google-shopping-product.model";
 
 // Simple in-memory cache for search results
@@ -25,6 +26,8 @@ function getQueryType(query: string): string {
     "حیوانات خانگی",
     "حیوانات",
     "pets",
+    "pet",
+    "petshop",
     "سگ",
     "dog",
     "گربه",
@@ -44,6 +47,7 @@ function getQueryType(query: string): string {
     "ورزشی",
     "sport",
     "sports",
+    "spor",
     "ورزش",
     "فیتنس",
     "fitness",
@@ -62,10 +66,14 @@ function getQueryType(query: string): string {
   const vitaminKeywords = [
     "ویتامین",
     "vitamin",
+    "vitaminler",
     "دارو",
     "medicine",
     "مکمل",
     "supplement",
+    "takviye",
+    "sağlık",
+    "saglik",
     "مولتی ویتامین",
     "کلسیم",
     "ملاتونین",
@@ -76,7 +84,10 @@ function getQueryType(query: string): string {
     "زیبایی",
     "آرایش",
     "beauty",
+    "güzellik",
+    "guzellik",
     "cosmetics",
+    "kozmetik",
     "makeup",
     "perfume",
     "cologne",
@@ -94,6 +105,8 @@ function getQueryType(query: string): string {
   const electronicsKeywords = [
     "الکترونیک",
     "electronics",
+    "elektronik",
+    "elektronık",
     "موبایل",
     "mobile",
     "لپ تاپ",
@@ -111,6 +124,10 @@ function getQueryType(query: string): string {
     "مد",
     "پوشاک",
     "fashion",
+    "moda",
+    "giyim",
+    "kıyafet",
+    "kiyafet",
     "clothing",
     "dress",
     "shirt",
@@ -296,6 +313,55 @@ function extractProductLink(product: any): string | null {
   return null;
 }
 
+// High-quality TR→FA translator that preserves brand names and unclear words
+async function translateTurkishToPersianKeepBrands(
+  title: string,
+  description: string
+): Promise<{ title: string; description: string }> {
+  if (!process.env.OPENAI_API_KEY) {
+    return { title, description };
+  }
+
+  try {
+    const prompt = `
+      متن زیر ممکن است ترکی یا انگلیسی باشد. آن را به فارسی روان و قابل فهم برای فروش اینترنتی ترجمه کن.
+      قوانین مهم:
+      - نام برندها/مدل‌ها/نام‌های اختصاصی را تغییر نده و همان‌طور که هستند نگه‌دار (مثل Zade Vital, LC Waikiki, Maybelline, D3 Vitamini).
+      - اگر کلمه‌ای معادل دقیق ندارد یا نام برند است، همان واژهٔ اصلی را حفظ کن.
+      - اعداد، واحدها و درصدها را حفظ کن.
+      - ترجمهٔ واضح، مختصر و طبیعی باشد؛ از کلمات نامانوس پرهیز کن.
+      - فقط خروجی JSON معتبر بده با کلیدهای "title" و "description".
+      - برای "description" حداکثر 25 کلمه و کاملاً قابل فهم بنویس.
+
+      عنوان: ${title}
+      توضیحات: ${description}
+
+      خروجی:
+      {"title":"...","description":"..."}
+    `;
+
+    const { text } = await generateText({
+      model: openai("gpt-4o-mini"),
+      prompt,
+      maxOutputTokens: 220,
+      temperature: 0.2,
+    });
+
+    try {
+      const parsed = JSON.parse(text);
+      return {
+        title: parsed.title?.toString()?.trim() || title,
+        description: parsed.description?.toString()?.trim() || description,
+      };
+    } catch {
+      // If JSON parsing fails, fall back to original values
+      return { title, description };
+    }
+  } catch {
+    return { title, description };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -438,6 +504,13 @@ export async function GET(request: NextRequest) {
 
     // Add query-specific enhancements for better differentiation
     const queryLower = cleanQuery.toLowerCase();
+
+    // Add TR synonyms based on FA query to improve precision
+    const trKeywords = getTurkishKeywordsForPersianQuery(query);
+    if (trKeywords.length > 0) {
+      cleanQuery = `${cleanQuery} ${trKeywords.join(" ")}`;
+      console.log(`🇹🇷 Added Turkish synonyms: ${trKeywords.join(", ")}`);
+    }
 
     // Add gender-specific keywords for fashion queries
     if (
@@ -1007,36 +1080,12 @@ export async function GET(request: NextRequest) {
         try {
           console.log(`🔄 Translating product ${index + 1}: ${product.title}`);
 
-          // ترجمه عنوان و توضیحات به فارسی
-          const translationResult = await generateText({
-            model: openai("gpt-3.5-turbo"),
-            prompt: `Translate the following product title and description to Persian (Farsi). 
-          Return only the Persian translation, nothing else. 
-          Make it a coherent sentence of 5-10 words, not word-for-word literal translation.
-          
-          Product title: "${product.title}"
-          Product description: "${product.snippet || ""}"
-          
-          Persian translation:`,
-            maxOutputTokens: 150,
-          });
-
-          const persianTitle = translationResult.text.trim();
-
-          // ترجمه جداگانه توضیحات
-          const descriptionTranslationResult = await generateText({
-            model: openai("gpt-3.5-turbo"),
-            prompt: `Translate the following product description to Persian (Farsi). 
-          Return only the Persian translation, nothing else. 
-          Make it natural and readable.
-          
-          Product description: "${product.snippet || ""}"
-          
-          Persian translation:`,
-            maxOutputTokens: 200,
-          });
-
-          const persianDescription = descriptionTranslationResult.text.trim();
+          // ترجمه عنوان و توضیحات به فارسی با حفظ نام برند
+          const { title: persianTitle, description: persianDescription } =
+            await translateTurkishToPersianKeepBrands(
+              product.title,
+              product.snippet || ""
+            );
 
           // استخراج قیمت
           let finalPrice = 0;

@@ -46,7 +46,7 @@ export default function Header() {
           </div>
 
           {/* Right Side Icons - Desktop */}
-          <div className="hidden md:flex flex-col items-end gap-2">
+          <div className="hidden md:flex flex-col items-end gap-6">
             <span className="text-sm text-green-600 leading-none">
              ارسال رایگان به سراسر کشور
             </span>
