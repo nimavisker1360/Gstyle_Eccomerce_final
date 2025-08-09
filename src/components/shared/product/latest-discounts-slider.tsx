@@ -209,20 +209,41 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
       {/* Box container to keep header and grid inside */}
       <div className="border-2 border-gray-300 rounded-xl p-4 md:p-6 bg-white/50 shadow-md">
         {/* Section Header aligned right with green bold title */}
-        <div className="relative mb-6 flex items-center justify-end">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-green-600 text-right">
-            تخفیفات
-          </h2>
-          <div className="absolute left-0">
-            <Link href="/search?discount=true">
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+        <div className="relative mb-2">
+          <div className="mb-2 rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 sm:px-3">
+            <p
+              dir="ltr"
+              className="text-[11px] sm:text-xs md:text-sm  text-blue-600 text-right flex flex-nowrap items-center justify-end gap-1 sm:gap-2 leading-6 whitespace-nowrap overflow-x-auto "
+            >
+                 کلیک کنید تا محصول به سبد خرید انتقال داده بشه 
+              <span
+                dir="rtl"
+                className="inline-flex items-center gap-1 whitespace-nowrap "
               >
-                بیشتر ببینید
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-            </Link>
+                روی
+                <span className="inline-flex items-center justify-center w-5 h-5 md:w-6 md:h-6 rounded-full bg-green-500 text-white">
+                  +
+                </span>
+              </span>
+              برای سفارش محصول
+          
+            </p>
+          </div>
+          <div className="flex items-center justify-end">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-green-600 text-right">
+              تخفیفات
+            </h2>
+            <div className="absolute left-0">
+              <Link href="/search?discount=true">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+                >
+                  بیشتر ببینید
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
