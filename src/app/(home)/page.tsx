@@ -2,6 +2,7 @@ import { HomeBanner } from "@/components/shared/home/home-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ShoppingProductsGrid from "@/components/shared/product/shopping-products-grid";
 import LatestDiscountsSlider from "@/components/shared/product/latest-discounts-slider";
+import WhyMaltina from "@/components/shared/home/why-maltina";
 import CategoriesGrid from "@/components/shared/product/categories-grid";
 import WeeklyTrends from "@/components/shared/product/weekly-trends";
 import BrandsShowcase from "@/components/shared/product/brands-showcase";
@@ -13,6 +14,11 @@ export default async function HomePage() {
     <>
       <div className="pt-8">
         <HomeBanner />
+      </div>
+
+      {/* Why Maltina Section - directly under banners */}
+      <div className="px-4 sm:px-0 pt-6 pb-4">
+        <WhyMaltina />
       </div>
 
       {/* Latest Discounts Section - Now fetches from Google Shopping */}
