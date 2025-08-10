@@ -12,6 +12,15 @@ export const metadata: Metadata = {
     default: `${APP_NAME}. ${APP_SLOGAN}`,
   },
   description: APP_DESCRIPTION,
+  icons: {
+    icon: [
+      { url: "/icons/logo01.png", type: "image/png", sizes: "16x16" },
+      { url: "/icons/logo01.png", type: "image/png", sizes: "32x32" },
+      { url: "/icons/logo01.png", type: "image/png", sizes: "64x64" },
+    ],
+    shortcut: "/icons/logo01.png",
+    apple: "/icons/logo01.png",
+  },
   viewport: {
     width: "device-width",
     initialScale: 1,
