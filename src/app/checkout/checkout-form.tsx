@@ -45,26 +45,10 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { createOrder } from "@/lib/actions/order.actions";
 
-const shippingAddressDefaultValues =
-  process.env.NODE_ENV === "development"
-    ? {
-        fullName: "Basir",
-        street: "1911, 65 Sherbrooke Est",
-        city: "Montreal",
-        province: "Quebec",
-        phone: "4181234567",
-        postalCode: "H2X 1C4",
-        country: "Canada",
-      }
-    : {
-        fullName: "",
-        street: "",
-        city: "",
-        province: "",
-        phone: "",
-        postalCode: "",
-        country: "",
-      };
+const shippingAddressDefaultValues = {
+  fullName: "",
+  phone: "",
+};
 
 const CheckoutForm = () => {
   const router = useRouter();
@@ -89,7 +73,7 @@ const CheckoutForm = () => {
   } = useCartStore();
   const isMounted = useIsMounted();
 
-  const shippingAddressForm = useForm<ShippingAddress>({
+  const shippingAddressForm = useForm<any>({
     resolver: zodResolver(ShippingAddressSchema),
     defaultValues: shippingAddress || shippingAddressDefaultValues,
   });
@@ -101,11 +85,8 @@ const CheckoutForm = () => {
   useEffect(() => {
     if (!isMounted || !shippingAddress) return;
     shippingAddressForm.setValue("fullName", shippingAddress.fullName);
-    shippingAddressForm.setValue("street", shippingAddress.street);
-    shippingAddressForm.setValue("city", shippingAddress.city);
-    shippingAddressForm.setValue("country", shippingAddress.country);
-    shippingAddressForm.setValue("postalCode", shippingAddress.postalCode);
-    shippingAddressForm.setValue("province", shippingAddress.province);
+    // street removed
+    // Simplified fields per new checkout form
     shippingAddressForm.setValue("phone", shippingAddress.phone);
   }, [items, isMounted, router, shippingAddress, shippingAddressForm]);
 
@@ -151,60 +132,60 @@ const CheckoutForm = () => {
   const handleSelectShippingAddress = () => {
     shippingAddressForm.handleSubmit(onSubmitShippingAddress)();
   };
+  const effectiveItemsPrice =
+    itemsPrice && itemsPrice > 0
+      ? itemsPrice
+      : items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const computedTotal =
+    effectiveItemsPrice + (shippingPrice ?? 0) + (taxPrice ?? 0);
   const CheckoutSummary = () => (
     <Card>
       <CardContent className="p-4">
-        {!isAddressSelected && (
-          <div className="border-b mb-4">
-            <Button
-              className="rounded-full w-full"
-              onClick={handleSelectShippingAddress}
-            >
-              ارسال به این آدرس
-            </Button>
-            <p className="text-xs text-center py-2">
-              آدرس ارسال و روش پرداخت را انتخاب کنید تا هزینه ارسال، دستمزد و مالیات محاسبه شود.
-            </p>
-          </div>
-        )}
+        {/* Removed initial summary action button */}
         {isAddressSelected && !isPaymentMethodSelected && (
           <div className=" mb-4">
             <Button
-              className="rounded-full w-full"
+              className="rounded-full w-full bg-green-600 hover:bg-green-700 text-white"
               onClick={handleSelectPaymentMethod}
             >
               استفاده از این روش پرداخت
             </Button>
 
             <p className="text-xs text-center py-2">
-              روش پرداخت را انتخاب کنید تا ادامه دهید. هنوز فرصت بررسی و ویرایش سفارش خود را قبل از نهایی شدن خواهید داشت.
+              روش پرداخت را انتخاب کنید تا ادامه دهید. هنوز فرصت بررسی و ویرایش
+              سفارش خود را قبل از نهایی شدن خواهید داشت.
             </p>
           </div>
         )}
         {isPaymentMethodSelected && isAddressSelected && (
           <div>
-            <Button onClick={handlePlaceOrder} className="rounded-full w-full">
+            <Button
+              onClick={handlePlaceOrder}
+              className="rounded-full w-full bg-green-600 hover:bg-green-700 text-white"
+            >
               ثبت سفارش
             </Button>
             <p className="text-xs text-center py-2">
-              با ثبت سفارش، شما با <Link href="/page/privacy-policy">حریم خصوصی</Link> و
-              <Link href="/page/conditions-of-use"> شرایط استفاده</Link> {APP_NAME} موافقت می‌کنید.
+              با ثبت سفارش، شما با{" "}
+              <Link href="/page/privacy-policy">حریم خصوصی</Link> و
+              <Link href="/page/conditions-of-use"> شرایط استفاده</Link>{" "}
+              {APP_NAME} موافقت می‌کنید.
             </p>
           </div>
         )}
 
         <div>
-          <div className="text-lg font-bold">خلاصه سفارش</div>
+          <div className="text-xl text-sky-500">خلاصه سفارش</div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span>محصولات:</span>
-              <span>
-                <ProductPrice price={itemsPrice} plain />
+              <span className="text-sky-500">محصولات:</span>
+              <span className="text-emerald-700">
+                <ProductPrice price={effectiveItemsPrice} plain />
               </span>
             </div>
             <div className="flex justify-between">
-              <span>ارسال و دستمزد:</span>
-              <span>
+              <span className="text-sky-500">ارسال و دستمزد:</span>
+              <span className="text-emerald-700">
                 {shippingPrice === undefined ? (
                   "--"
                 ) : shippingPrice === 0 ? (
@@ -215,8 +196,8 @@ const CheckoutForm = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span> مالیات:</span>
-              <span>
+              <span className="text-sky-500"> مالیات:</span>
+              <span className="text-emerald-700">
                 {taxPrice === undefined ? (
                   "--"
                 ) : (
@@ -224,10 +205,10 @@ const CheckoutForm = () => {
                 )}
               </span>
             </div>
-            <div className="flex justify-between  pt-4 font-bold text-lg">
+            <div className="flex justify-between  pt-4 text-lg text-emerald-700">
               <span> جمع کل سفارش:</span>
-              <span>
-                <ProductPrice price={totalPrice} plain />
+              <span className="font-semibold">
+                <ProductPrice price={computedTotal} plain />
               </span>
             </div>
           </div>
@@ -237,7 +218,7 @@ const CheckoutForm = () => {
   );
 
   return (
-    <main className="max-w-6xl mx-auto highlight-link">
+    <main dir="rtl" className="max-w-6xl mx-auto text-right highlight-link">
       <div className="grid md:grid-cols-4 gap-6">
         <div className="md:col-span-3">
           {/* shipping address */}
@@ -251,8 +232,7 @@ const CheckoutForm = () => {
                 <div className="col-span-5 ">
                   <p>
                     {shippingAddress.fullName} <br />
-                    {shippingAddress.street} <br />
-                    {`${shippingAddress.city}, ${shippingAddress.province}, ${shippingAddress.postalCode}, ${shippingAddress.country}`}
+                    {shippingAddress.phone}
                   </p>
                 </div>
                 <div className="col-span-2">
@@ -270,10 +250,7 @@ const CheckoutForm = () => {
               </div>
             ) : (
               <>
-                <div className="flex text-primary text-lg font-bold my-2">
-                  <span className="w-8">۱ </span>
-                  <span>وارد کردن آدرس ارسال</span>
-                </div>
+                <div className="flex text-primary text-lg font-bold my-2"></div>
                 <Form {...shippingAddressForm}>
                   <form
                     method="post"
@@ -282,12 +259,11 @@ const CheckoutForm = () => {
                     )}
                     className="space-y-4"
                   >
-                    <Card className="md:ml-8 my-4">
+                    <Card className="md:ml-8 my-4 rounded-none md:rounded-lg">
                       <CardContent className="p-4 space-y-2">
-                        <div className="text-lg font-bold mb-2">
-                          آدرس شما
+                        <div className="text-center text-xs md:text-sm text-muted-foreground">
+                          وارد کردن مشخصات
                         </div>
-
                         <div className="flex flex-col gap-5 md:flex-row">
                           <FormField
                             control={shippingAddressForm.control}
@@ -296,98 +272,17 @@ const CheckoutForm = () => {
                               <FormItem className="w-full">
                                 <FormLabel>نام کامل</FormLabel>
                                 <FormControl>
-                                  <Input
-                                    placeholder="نام کامل را وارد کنید"
-                                    {...field}
-                                  />
+                                  <Input {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
                         </div>
-                        <div>
-                          <FormField
-                            control={shippingAddressForm.control}
-                            name="street"
-                            render={({ field }) => (
-                              <FormItem className="w-full">
-                                <FormLabel>آدرس</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="آدرس را وارد کنید"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                        {/* Address field removed per request */}
+                        {/* Removed city/province/country fields per request */}
                         <div className="flex flex-col gap-5 md:flex-row">
-                          <FormField
-                            control={shippingAddressForm.control}
-                            name="city"
-                            render={({ field }) => (
-                              <FormItem className="w-full">
-                                <FormLabel>شهر</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="شهر را وارد کنید" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={shippingAddressForm.control}
-                            name="province"
-                            render={({ field }) => (
-                              <FormItem className="w-full">
-                                <FormLabel>استان</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="استان را وارد کنید"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={shippingAddressForm.control}
-                            name="country"
-                            render={({ field }) => (
-                              <FormItem className="w-full">
-                                <FormLabel>کشور</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="کشور را وارد کنید"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <div className="flex flex-col gap-5 md:flex-row">
-                          <FormField
-                            control={shippingAddressForm.control}
-                            name="postalCode"
-                            render={({ field }) => (
-                              <FormItem className="w-full">
-                                <FormLabel>کد پستی</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="کد پستی را وارد کنید"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          {/* Removed postal code as requested */}
                           <FormField
                             control={shippingAddressForm.control}
                             name="phone"
@@ -395,10 +290,7 @@ const CheckoutForm = () => {
                               <FormItem className="w-full">
                                 <FormLabel>شماره تلفن</FormLabel>
                                 <FormControl>
-                                  <Input
-                                    placeholder="شماره تلفن را وارد کنید"
-                                    {...field}
-                                  />
+                                  <Input {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -409,7 +301,7 @@ const CheckoutForm = () => {
                       <CardFooter className="  p-4">
                         <Button
                           type="submit"
-                          className="rounded-full font-bold"
+                          className="w-full rounded-none md:rounded-lg font-bold bg-green-600 hover:bg-green-700 text-white border-0 py-4 text-base md:py-2 md:text-sm"
                         >
                           ارسال به این آدرس
                         </Button>
@@ -423,15 +315,11 @@ const CheckoutForm = () => {
           {/* payment method */}
           <div className="border-y">
             {isPaymentMethodSelected && paymentMethod ? (
-              <div className="grid  grid-cols-1 md:grid-cols-12  my-3 pb-3">
-                <div className="flex text-lg font-bold  col-span-5">
-                  <span className="w-8">۲ </span>
-                  <span>روش پرداخت</span>
-                </div>
-                <div className="col-span-5 ">
+              <div className="flex items-center justify-between my-3 pb-3 gap-4">
+                <div>
                   <p>{paymentMethod}</p>
                 </div>
-                <div className="col-span-2">
+                <div>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -445,11 +333,8 @@ const CheckoutForm = () => {
               </div>
             ) : isAddressSelected ? (
               <>
-                <div className="flex text-primary text-lg font-bold my-2">
-                  <span className="w-8">۲ </span>
-                  <span>انتخاب روش پرداخت</span>
-                </div>
-                <Card className="md:ml-8 my-4">
+                {/* removed step 2 heading */}
+                <Card className="md:ml-8 my-4 rounded-none md:rounded-lg">
                   <CardContent className="p-4">
                     <RadioGroup
                       value={paymentMethod}
@@ -481,22 +366,13 @@ const CheckoutForm = () => {
                   </CardFooter>
                 </Card>
               </>
-            ) : (
-              <div className="flex text-muted-foreground text-lg font-bold my-4 py-3">
-                <span className="w-8">۲ </span>
-                <span>انتخاب روش پرداخت</span>
-              </div>
-            )}
+            ) : null}
           </div>
           {/* items and delivery date */}
           <div>
             {isDeliveryDateSelected && deliveryDateIndex != undefined ? (
-              <div className="grid  grid-cols-1 md:grid-cols-12  my-3 pb-3">
-                <div className="flex text-lg font-bold  col-span-5">
-                  <span className="w-8">۳ </span>
-                  <span>محصولات و ارسال</span>
-                </div>
-                <div className="col-span-5">
+              <div className="flex items-start justify-between my-3 pb-3 gap-4">
+                <div>
                   <p>
                     تاریخ تحویل:{" "}
                     {
@@ -516,7 +392,7 @@ const CheckoutForm = () => {
                     ))}
                   </ul>
                 </div>
-                <div className="col-span-2">
+                <div>
                   <Button
                     variant={"outline"}
                     onClick={() => {
@@ -530,11 +406,8 @@ const CheckoutForm = () => {
               </div>
             ) : isPaymentMethodSelected && isAddressSelected ? (
               <>
-                <div className="flex text-primary  text-lg font-bold my-2">
-                  <span className="w-8">۳ </span>
-                  <span>بررسی محصولات و ارسال</span>
-                </div>
-                <Card className="md:ml-8">
+                {/* removed step 3 heading */}
+                <Card className="md:ml-8 rounded-none md:rounded-lg">
                   <CardContent className="p-4">
                     <p className="mb-2">
                       <span className="text-lg font-bold text-green-700">
@@ -548,7 +421,8 @@ const CheckoutForm = () => {
                           ).dateOnly
                         }
                       </span>{" "}
-                      اگر در {timeUntilMidnight().hours} ساعت و {timeUntilMidnight().minutes} دقیقه آینده سفارش دهید.
+                      اگر در {timeUntilMidnight().hours} ساعت و{" "}
+                      {timeUntilMidnight().minutes} دقیقه آینده سفارش دهید.
                     </p>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
@@ -662,12 +536,7 @@ const CheckoutForm = () => {
                   </CardContent>
                 </Card>
               </>
-            ) : (
-              <div className="flex text-muted-foreground text-lg font-bold my-4 py-3">
-                <span className="w-8">۳ </span>
-                <span>محصولات و ارسال</span>
-              </div>
-            )}
+            ) : null}
           </div>
           {isPaymentMethodSelected && isAddressSelected && (
             <div className="mt-6">
@@ -682,17 +551,16 @@ const CheckoutForm = () => {
                   </Button>
                   <div className="flex-1">
                     <p className="font-bold text-lg">
-                      جمع کل سفارش: <ProductPrice price={totalPrice} plain />
+                      جمع کل سفارش:{" "}
+                      <span className="font-semibold text-emerald-700">
+                        <ProductPrice price={computedTotal} plain />
+                      </span>
                     </p>
                     <p className="text-xs">
                       {" "}
                       با ثبت سفارش، شما با {APP_NAME}&apos;s{" "}
-                      <Link href="/page/privacy-policy">حریم خصوصی</Link>{" "}
-                      و
-                      <Link href="/page/conditions-of-use">
-                        {" "}
-                        شرایط استفاده
-                      </Link>
+                      <Link href="/page/privacy-policy">حریم خصوصی</Link> و
+                      <Link href="/page/conditions-of-use"> شرایط استفاده</Link>
                       موافقت می‌کنید.
                     </p>
                   </div>

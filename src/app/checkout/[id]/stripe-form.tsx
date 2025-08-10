@@ -72,14 +72,14 @@ export default function StripeForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="text-xl">Stripe Checkout</div>
+      <div className="text-xl text-sky-700">Stripe Checkout</div>
       {errorMessage && <div className="text-destructive">{errorMessage}</div>}
       <PaymentElement />
       <div>
         <LinkAuthenticationElement onChange={(e) => setEmail(e.value.email)} />
       </div>
       <Button
-        className="w-full"
+        className="w-full bg-green-600 hover:bg-green-700 text-white"
         size="lg"
         disabled={stripe == null || elements == null || isLoading}
       >

@@ -76,12 +76,13 @@ export const ProductInputSchema = z.object({
 // Order Item
 export const ShippingAddressSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  street: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  postalCode: z.string().min(1, "Postal code is required"),
-  province: z.string().min(1, "Province is required"),
+  // Address removed in simplified checkout
+  street: z.string().optional().default(""),
+  city: z.string().optional().default(""),
+  postalCode: z.string().optional().default(""),
+  province: z.string().optional().default(""),
   phone: z.string().min(1, "Phone number is required"),
-  country: z.string().min(1, "Country is required"),
+  country: z.string().optional().default(""),
 });
 export const OrderItemSchema = z.object({
   clientId: z.string().min(1, "clientId is required"),
