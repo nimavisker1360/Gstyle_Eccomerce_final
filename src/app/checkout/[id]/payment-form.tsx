@@ -18,9 +18,7 @@ import CheckoutFooter from "../checkout-footer";
 import { redirect, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import ProductPrice from "@/components/shared/product/product-price";
-import StripeForm from "./stripe-form";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+// Stripe removed
 
 export default function OrderPaymentForm({
   order,
@@ -131,19 +129,7 @@ export default function OrderPaymentForm({
                 </PayPalScriptProvider>
               </div>
             )}
-            {!isPaid && paymentMethod === "Stripe" && clientSecret && (
-              <Elements
-                options={{
-                  clientSecret,
-                }}
-                stripe={stripePromise}
-              >
-                <StripeForm
-                  priceInCents={Math.round(order.totalPrice * 100)}
-                  orderId={order._id}
-                />
-              </Elements>
-            )}
+            {/* Stripe removed */}
 
             {!isPaid && paymentMethod === "Cash On Delivery" && (
               <Button
@@ -158,9 +144,7 @@ export default function OrderPaymentForm({
       </CardContent>
     </Card>
   );
-  const stripePromise = loadStripe(
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
-  );
+  // Stripe removed
   return (
     <main dir="rtl" className="max-w-6xl mx-auto text-right highlight-link">
       <div className="grid md:grid-cols-4 gap-6">

@@ -88,10 +88,10 @@ const CheckoutForm = () => {
       // Prepare minimal payload for support
       const payload = {
         items,
-        itemsPrice,
+        itemsPrice: effectiveItemsPrice,
         shippingPrice,
         taxPrice,
-        totalPrice,
+        totalPrice: computedTotal,
         paymentMethod,
         shippingAddress: values,
         expectedDeliveryDate:
@@ -578,6 +578,46 @@ const CheckoutForm = () => {
                               ))}
                             </RadioGroup>
                           </ul>
+                          {/* Order totals breakdown with highlighted total */}
+                          <div className="mt-6 border-t pt-4 space-y-2 font-normal">
+                            <div className="flex justify-between">
+                              <span className="text-sky-500">محصولات:</span>
+                              <span className="text-emerald-700">
+                                <ProductPrice
+                                  price={effectiveItemsPrice}
+                                  plain
+                                />
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sky-500">مالیات:</span>
+                              <span className="text-emerald-700">
+                                {taxPrice === undefined ? (
+                                  "--"
+                                ) : (
+                                  <ProductPrice price={taxPrice} plain />
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sky-500">ارسال:</span>
+                              <span className="text-emerald-700">
+                                {shippingPrice === undefined ? (
+                                  "--"
+                                ) : shippingPrice === 0 ? (
+                                  "رایگان"
+                                ) : (
+                                  <ProductPrice price={shippingPrice} plain />
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center bg-green-600 text-white rounded-md px-3 py-2 mt-2">
+                              <span className="font-bold">جمع کل</span>
+                              <span className="font-semibold">
+                                <ProductPrice price={computedTotal} plain />
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

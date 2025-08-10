@@ -12,7 +12,7 @@ import {
   Tailwind,
   Text,
 } from "@react-email/components";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { convertTRYToRial, formatRial, formatDateTime } from "@/lib/utils";
 
 type SupportCheckoutEmailProps = {
   payload: {
@@ -37,10 +37,15 @@ type SupportCheckoutEmailProps = {
   };
 };
 
-const safeCurrency = (value?: number | null) => {
-  if (value === undefined || value === null || Number.isNaN(value))
-    return "$0.00";
-  return formatCurrency(value);
+const safeRial = (tryAmount?: number | null) => {
+  if (
+    tryAmount === undefined ||
+    tryAmount === null ||
+    Number.isNaN(tryAmount)
+  ) {
+    return formatRial(0);
+  }
+  return formatRial(convertTRYToRial(tryAmount));
 };
 
 export default function SupportCheckoutEmail({
@@ -115,7 +120,7 @@ export default function SupportCheckoutEmail({
                     </Text>
                   </Column>
                   <Column align="right">
-                    <Text className="m-0">{safeCurrency(item.price)}</Text>
+                    <Text className="m-0">{safeRial(item.price)}</Text>
                   </Column>
                 </Row>
               ))}
@@ -128,8 +133,8 @@ export default function SupportCheckoutEmail({
               ].map(({ name, price }) => (
                 <Row key={name} className="py-1">
                   <Column align="right">{name}:</Column>
-                  <Column align="right" width={80} className="align-top">
-                    <Text className="m-0">{safeCurrency(price as number)}</Text>
+                  <Column align="right" width={140} className="align-top">
+                    <Text className="m-0">{safeRial(price ?? 0)}</Text>
                   </Column>
                 </Row>
               ))}
