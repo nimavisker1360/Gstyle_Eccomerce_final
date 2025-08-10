@@ -4,8 +4,6 @@ import { IOrder } from "@/lib/db/models/order.model";
 import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
 import { formatId } from "@/lib/utils";
 
-const resend = new Resend(process.env.RESEND_API_KEY as string);
-
 export const sendPurchaseReceipt = async ({ order }: { order: IOrder }) => {
   try {
     // Ensure order and user data exist
@@ -29,6 +27,12 @@ export const sendPurchaseReceipt = async ({ order }: { order: IOrder }) => {
       throw new Error("User email is empty");
     }
 
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn("RESEND_API_KEY missing. Skipping purchase receipt email.");
+      return;
+    }
+    const resend = new Resend(apiKey);
     await resend.emails.send({
       from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
       to: userEmail,

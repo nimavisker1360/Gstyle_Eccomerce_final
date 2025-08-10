@@ -44,6 +44,7 @@ import {
 } from "@/lib/constants";
 import { toast } from "@/hooks/use-toast";
 import { createOrder } from "@/lib/actions/order.actions";
+import FullscreenLoading from "@/components/shared/fullscreen-loading";
 
 const shippingAddressDefaultValues = {
   fullName: "",
@@ -72,15 +73,55 @@ const CheckoutForm = () => {
     clearCart,
   } = useCartStore();
   const isMounted = useIsMounted();
+  const [isSendingToSupport, setIsSendingToSupport] = useState(false);
 
   const shippingAddressForm = useForm<any>({
     resolver: zodResolver(ShippingAddressSchema),
     defaultValues: shippingAddress || shippingAddressDefaultValues,
   });
-  const onSubmitShippingAddress: SubmitHandler<ShippingAddress> = (values) => {
+  const onSubmitShippingAddress: SubmitHandler<ShippingAddress> = async (
+    values
+  ) => {
     setShippingAddress(values);
-    // Redirect to home after sending to support, and stop checkout progression
-    router.push("/");
+    try {
+      setIsSendingToSupport(true);
+      // Prepare minimal payload for support
+      const payload = {
+        items,
+        itemsPrice,
+        shippingPrice,
+        taxPrice,
+        totalPrice,
+        paymentMethod,
+        shippingAddress: values,
+        expectedDeliveryDate:
+          deliveryDateIndex !== undefined
+            ? calculateFutureDate(
+                AVAILABLE_DELIVERY_DATES[deliveryDateIndex].daysToDeliver
+              )
+            : undefined,
+      };
+
+      await fetch("/api/support/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      toast({
+        description: "اطلاعات شما برای پشتیبانی ارسال شد.",
+        variant: "success",
+      });
+      // brief delay for UX so the loader is visible
+      setTimeout(() => router.push("/"), 400);
+    } catch {
+      toast({
+        description: "ارسال ناموفق بود. دوباره تلاش کنید.",
+        variant: "destructive",
+      });
+    } finally {
+      // keep loader until navigation happens; do not turn off immediately
+    }
   };
 
   useEffect(() => {
@@ -220,6 +261,12 @@ const CheckoutForm = () => {
 
   return (
     <main dir="rtl" className="max-w-6xl mx-auto text-right highlight-link">
+      {isSendingToSupport && (
+        <FullscreenLoading
+          title="در حال ارسال به پشتیبانی..."
+          subtitle="لطفاً صبر کنید، به‌زودی به خانه هدایت می‌شوید"
+        />
+      )}
       <div className="grid md:grid-cols-4 gap-6">
         <div className="md:col-span-3">
           {/* shipping address */}
