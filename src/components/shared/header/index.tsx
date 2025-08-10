@@ -50,9 +50,9 @@ export default function Header() {
             <span className="text-sm text-green-600 leading-none">
               ارسال رایگان به سراسر کشور
             </span>
-            <div className="flex items-center gap-8">
-              <UserButton />
+            <div className="flex items-center gap-4">
               <CartButton />
+              <UserButton />
             </div>
           </div>
 
@@ -107,16 +107,6 @@ export default function Header() {
               )}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Divider between categories and brands - full width with shadow */}
-      <div className="w-full border-t border-gray-200 shadow-[0_2px_6px_rgba(0,0,0,0.08)]"></div>
-
-      {/* Brands Strip - moved below categories */}
-      <div className="px-4 sm:px-6 py-2 bg-white">
-        <div className="max-w-7xl w-full mx-auto">
-          <BrandsStrip />
         </div>
       </div>
 

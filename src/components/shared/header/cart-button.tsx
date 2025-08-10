@@ -14,20 +14,22 @@ export default function CartButton() {
   const cartItemsCount = items.reduce((a, c) => a + c.quantity, 0);
   return (
     <Link href="/cart" className="px-1 header-button">
-      <div className="flex items-end text-xs relative">
-        <ShoppingCartIcon className="h-6 w-6 md:h-8 md:w-8" />
-
-        {isMounted && (
-          <span
-            className={cn(
-              `bg-green-500 w-4 h-4 md:w-5 md:h-5 rounded-full text-white text-xs font-bold absolute right-[20px] md:right-[30px] top-[-2px] md:top-[-4px] z-10 flex items-center justify-center`,
-              cartItemsCount >= 10 && "text-xs"
-            )}
-          >
-            {cartItemsCount}
-          </span>
-        )}
-        <span className="font-bold hidden md:block text-right">سبد خرید</span>
+      <div className="flex items-center gap-2 text-xs">
+        <div className="relative">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 shadow-sm transition-colors">
+            <ShoppingCartIcon className="h-5 w-5" />
+          </div>
+          {isMounted && (
+            <span
+              className={cn(
+                `bg-green-600 text-white w-5 h-5 rounded-full text-[10px] font-bold absolute -top-1 -right-1 z-10 flex items-center justify-center shadow`,
+                cartItemsCount >= 10 && "text-[10px]"
+              )}
+            >
+              {cartItemsCount}
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );

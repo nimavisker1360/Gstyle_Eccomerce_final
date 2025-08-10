@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
+import { User, ClipboardList, LogOut } from "lucide-react";
 import Link from "next/link";
 import useCartStore from "@/hooks/use-cart-store";
 
@@ -35,70 +35,86 @@ export default function UserButtonClient() {
     <div className="flex gap-2 items-center">
       <DropdownMenu>
         <DropdownMenuTrigger className="header-button" asChild>
-          <div className="flex items-center">
-            <div className="flex flex-col text-xs text-left">
-              <span>سلام، {session ? session.user.name : "ورود"}</span>
-              <span className="font-bold">حساب کاربری و سفارشات</span>
-            </div>
-            <ChevronDown />
-          </div>
+          <button
+            type="button"
+            aria-label={session ? "منوی حساب کاربری" : "ورود به حساب"}
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 shadow-sm transition-colors"
+          >
+            <User className="h-5 w-5" />
+          </button>
         </DropdownMenuTrigger>
         {session ? (
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {session.user.name}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {session.user.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuGroup>
+          <DropdownMenuContent
+            className="w-64 p-0 overflow-hidden rounded-xl border border-green-200 shadow-xl"
+            align="end"
+            sideOffset={8}
+            forceMount
+          >
+            <div className="bg-green-600 text-white px-4 py-3 text-right">
+              <p className="text-sm font-bold leading-none">
+                {session.user.name}
+              </p>
+              <p className="text-xs opacity-90 mt-1">{session.user.email}</p>
+            </div>
+            <div className="py-1" dir="rtl">
               <Link className="w-full" href="/account">
-                <DropdownMenuItem>حساب کاربری شما</DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 cursor-pointer">
+                  <span>حساب کاربری شما</span>
+                  <User className="w-4 h-4 text-green-600" />
+                </DropdownMenuItem>
               </Link>
               <Link className="w-full" href="/account/orders">
-                <DropdownMenuItem>سفارشات شما</DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 cursor-pointer">
+                  <span>سفارشات شما</span>
+                  <ClipboardList className="w-4 h-4 text-green-600" />
+                </DropdownMenuItem>
               </Link>
 
               {session.user.role === "Admin" && (
                 <Link className="w-full" href="/admin/overview">
-                  <DropdownMenuItem>مدیریت</DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 cursor-pointer">
+                    <span>مدیریت</span>
+                    <User className="w-4 h-4 text-green-600" />
+                  </DropdownMenuItem>
                 </Link>
               )}
-            </DropdownMenuGroup>
-            <DropdownMenuItem className="p-0 mb-1">
-              <Button
-                className="w-full py-4 px-2 h-4 justify-start"
-                variant="ghost"
+
+              <div className="my-1 border-t border-gray-100" />
+
+              <DropdownMenuItem
                 onClick={handleSignOut}
+                className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 cursor-pointer"
               >
-                خروج
-              </Button>
-            </DropdownMenuItem>
+                <span>خروج</span>
+                <LogOut className="w-4 h-4 text-green-600" />
+              </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         ) : (
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Link
-                  className={cn(
-                    buttonVariants(),
-                    "w-full bg-green-600 hover:bg-green-700 text-white"
-                  )}
-                  href="/sign-in"
-                >
-                  ورود
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuLabel>
-              <div className="font-normal">
+          <DropdownMenuContent
+            className="w-64 p-0 overflow-hidden rounded-xl border border-green-200 shadow-xl"
+            align="end"
+            sideOffset={8}
+            forceMount
+          >
+            <div className="bg-green-600 text-white px-4 py-3 text-right">
+              <p className="text-sm font-bold leading-none">ورود به حساب</p>
+              <p className="text-xs opacity-90 mt-1">برای ادامه وارد شوید</p>
+            </div>
+            <div className="py-2 px-3" dir="rtl">
+              <Link
+                className={cn(
+                  buttonVariants(),
+                  "w-full bg-green-600 hover:bg-green-700 text-white"
+                )}
+                href="/sign-in"
+              >
+                ورود
+              </Link>
+              <div className="text-xs text-right mt-2">
                 مشتری جدید؟ <Link href="/sign-up">ثبت نام</Link>
               </div>
-            </DropdownMenuLabel>
+            </div>
           </DropdownMenuContent>
         )}
       </DropdownMenu>

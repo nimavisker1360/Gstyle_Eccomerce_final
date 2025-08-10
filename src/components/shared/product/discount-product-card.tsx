@@ -102,6 +102,7 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
       setIsAddedToCart(true);
       toast({
         description: "به سبد خرید اضافه شد",
+        variant: "success",
       });
     } catch (error: any) {
       toast({
