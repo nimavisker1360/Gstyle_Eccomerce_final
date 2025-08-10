@@ -79,7 +79,8 @@ const CheckoutForm = () => {
   });
   const onSubmitShippingAddress: SubmitHandler<ShippingAddress> = (values) => {
     setShippingAddress(values);
-    setIsAddressSelected(true);
+    // Redirect to home after sending to support, and stop checkout progression
+    router.push("/");
   };
 
   useEffect(() => {
@@ -303,7 +304,7 @@ const CheckoutForm = () => {
                           type="submit"
                           className="w-full rounded-none md:rounded-lg font-bold bg-green-600 hover:bg-green-700 text-white border-0 py-4 text-base md:py-2 md:text-sm"
                         >
-                          ارسال به این آدرس
+                          ارسال به پشتیبانی
                         </Button>
                       </CardFooter>
                     </Card>
