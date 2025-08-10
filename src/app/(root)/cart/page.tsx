@@ -15,39 +15,72 @@ import { APP_NAME, FREE_SHIPPING_MIN_PRICE } from "@/lib/constants";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ShoppingCart } from "lucide-react";
 import React from "react";
+import { CardDescription } from "@/components/ui/card";
 
 export default function CartPage() {
   const {
-    cart: { items, itemsPrice },
+    cart: { items },
     updateItem,
     removeItem,
   } = useCartStore();
+  const computedItemsPrice = React.useMemo(
+    () => items.reduce((acc, item) => acc + item.price * item.quantity, 0),
+    [items]
+  );
   const router = useRouter();
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-4  md:gap-4">
         {items.length === 0 ? (
-          <Card className="col-span-4 rounded-none">
-            <CardHeader className="text-3xl  ">
-              سبد خرید شما خالی است
-            </CardHeader>
-            <CardContent>
-              ادامه خرید در <Link href="/">{APP_NAME}</Link>
+          <Card className="col-span-4 rounded-none bg-gradient-to-l from-green-50 to-blue-50 border-green-200">
+            <CardContent className="p-10">
+              <div
+                dir="rtl"
+                className="flex items-center justify-between gap-6"
+              >
+                <div className="flex-1 text-right">
+                  <h2 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-l from-green-700 to-blue-700 bg-clip-text text-transparent">
+                    سبد خرید شما خالی است
+                  </h2>
+                  <p className="mt-3 text-sm md:text-base text-green-700/80">
+                    هنوز محصولی اضافه نکرده‌اید. برای شروع خرید، به صفحه اصلی
+                    بروید.
+                  </p>
+                  <div className="mt-6 flex justify-end">
+                    <Link href="/" className="inline-flex">
+                      <Button className="rounded-full bg-green-600 hover:bg-green-700 px-6">
+                        ادامه خرید در {APP_NAME}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+                <div className="hidden md:flex items-center justify-center w-28 h-28 md:w-32 md:h-32 rounded-full bg-white/80 border border-blue-100 shadow-sm text-green-700">
+                  <ShoppingCart className="w-12 h-12" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         ) : (
           <>
             <div className="col-span-3">
-              <Card className="rounded-none">
-                <CardHeader className="text-3xl pb-0">سبد خرید</CardHeader>
+              <Card className="rounded-none bg-gradient-to-l from-green-50 to-blue-50 border-green-200">
+                <CardHeader className="text-3xl pb-0 text-right">
+                  سبد خرید
+                  <CardDescription className="text-sm text-green-700 text-right">
+                    اقلام انتخاب‌شده شما در زیر نمایش داده می‌شود
+                  </CardDescription>
+                </CardHeader>
                 <CardContent className="p-4">
-                  <div className="flex justify-end border-b mb-4">قیمت</div>
+                  <div className="flex justify-end border-b border-green-200 mb-4 text-green-700">
+                    قیمت
+                  </div>
 
                   {items.map((item) => (
                     <div
                       key={item.clientId}
-                      className="flex flex-col md:flex-row justify-between py-4 border-b gap-4"
+                      className="flex flex-col md:flex-row justify-between py-4 border-b border-blue-100 gap-4"
                     >
                       <Link href={`/product/${item.slug}`}>
                         <div className="relative w-40 h-40">
@@ -63,7 +96,7 @@ export default function CartPage() {
                         </div>
                       </Link>
 
-                      <div className="flex-1 space-y-4">
+                      <div className="flex-1 space-y-4 text-right">
                         <Link
                           href={`/product/${item.slug}`}
                           className="text-lg hover:no-underline  "
@@ -80,7 +113,7 @@ export default function CartPage() {
                             {item.size}
                           </p>
                         </div>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex gap-2 items-center justify-end">
                           <Select
                             value={item.quantity.toString()}
                             onValueChange={(value) =>
@@ -103,22 +136,16 @@ export default function CartPage() {
                           <Button
                             variant={"outline"}
                             onClick={() => removeItem(item)}
+                            className="border-red-200 text-red-700 hover:bg-red-50"
                           >
                             حذف
                           </Button>
                         </div>
+                        {/* unit price x qty removed by request */}
                       </div>
                       <div>
-                        <p className="text-right">
-                          {item.quantity > 1 && (
-                            <>
-                              {item.quantity} x
-                              <ProductPrice price={item.price} plain />
-                              <br />
-                            </>
-                          )}
-
-                          <span className="font-bold text-lg">
+                        <p className="text-right text-blue-700">
+                          <span className="font-bold text-lg text-green-700">
                             <ProductPrice
                               price={item.price * item.quantity}
                               plain
@@ -129,25 +156,25 @@ export default function CartPage() {
                     </div>
                   ))}
 
-                  <div className="flex justify-end text-lg my-2">
+                  <div className="flex justify-end text-lg my-2 text-right">
                     جمع کل (
                     {items.reduce((acc, item) => acc + item.quantity, 0)} آیتم):{" "}
-                    <span className="font-bold ml-1">
-                      <ProductPrice price={itemsPrice} plain />
+                    <span className="font-bold ml-1 text-green-700">
+                      <ProductPrice price={computedItemsPrice} plain />
                     </span>{" "}
                   </div>
                 </CardContent>
               </Card>
             </div>
             <div>
-              <Card className="rounded-none">
-                <CardContent className="py-4 space-y-4">
-                  {itemsPrice < FREE_SHIPPING_MIN_PRICE ? (
+              <Card className="rounded-none bg-gradient-to-l from-blue-50 to-green-50 border-blue-200">
+                <CardContent className="py-4 space-y-4 text-right">
+                  {computedItemsPrice < FREE_SHIPPING_MIN_PRICE ? (
                     <div className="flex-1">
                       اضافه کنید{" "}
                       <span className="text-green-700">
                         <ProductPrice
-                          price={FREE_SHIPPING_MIN_PRICE - itemsPrice}
+                          price={FREE_SHIPPING_MIN_PRICE - computedItemsPrice}
                           plain
                         />
                       </span>{" "}
@@ -164,13 +191,13 @@ export default function CartPage() {
                   <div className="text-lg">
                     جمع کل (
                     {items.reduce((acc, item) => acc + item.quantity, 0)} آیتم):{" "}
-                    <span className="font-bold">
-                      <ProductPrice price={itemsPrice} plain />
+                    <span className="font-bold text-green-700">
+                      <ProductPrice price={computedItemsPrice} plain />
                     </span>{" "}
                   </div>
                   <Button
                     onClick={() => router.push("/checkout")}
-                    className="rounded-full w-full"
+                    className="rounded-full w-full bg-green-600 hover:bg-green-700"
                   >
                     ادامه به تسویه حساب
                   </Button>
