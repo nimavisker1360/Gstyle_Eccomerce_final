@@ -60,12 +60,12 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
               "✅ Using cached discount products for slider from localStorage"
             );
             const cachedProducts = JSON.parse(cached) as ShoppingProduct[];
-            const discountedOnly = cachedProducts.filter(
+            const underTwo = cachedProducts.filter(
               (p) =>
-                typeof p.originalPrice === "number" && p.originalPrice > p.price
+                typeof p.price === "number" && p.price > 0 && p.price <= 2000
             );
             // Shuffle cached products for variety
-            const shuffledProducts = [...discountedOnly].sort(
+            const shuffledProducts = [...underTwo].sort(
               () => Math.random() - 0.5
             );
             setProducts(shuffledProducts);
@@ -84,18 +84,17 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
         const data = await response.json();
 
         if (data.products && Array.isArray(data.products)) {
-          const discountedOnly = (data.products as ShoppingProduct[]).filter(
-            (p) =>
-              typeof p.originalPrice === "number" && p.originalPrice > p.price
+          const underTwo = (data.products as ShoppingProduct[]).filter(
+            (p) => typeof p.price === "number" && p.price > 0 && p.price <= 2000
           );
           // Shuffle products for additional randomization
-          const shuffledProducts = [...discountedOnly].sort(
+          const shuffledProducts = [...underTwo].sort(
             () => Math.random() - 0.5
           );
           setProducts(shuffledProducts);
 
           // Cache the results
-          localStorage.setItem(cacheKey, JSON.stringify(discountedOnly));
+          localStorage.setItem(cacheKey, JSON.stringify(underTwo));
           localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
 
           console.log(
@@ -123,8 +122,8 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
       <div className="w-full bg-white">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl text-green-600 text-left hidden">
-            آخرین تخفیف‌ها
+          <h2 className="text-xl text-green-600 text-left hidden">
+            محصولات زیر ۶ میلیون تومان
           </h2>
         </div>
 
@@ -174,8 +173,8 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
     return (
       <div className="w-full bg-white">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 text-right">
-            آخرین تخفیف‌ها
+          <h2 className="text-lg font-bold text-gray-800 text-right">
+            محصولات زیر ۶ میلیون تومان
           </h2>
         </div>
         <div className="text-center py-12">
@@ -193,8 +192,8 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
     return (
       <div className="w-full bg-white">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 text-right">
-            آخرین تخفیف‌ها
+          <h2 className="text-lg font-bold text-gray-800 text-right">
+            محصولات زیر ۶ میلیون تومان
           </h2>
         </div>
         <div className="text-center py-12">
@@ -215,7 +214,7 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
               dir="ltr"
               className="text-[11px] sm:text-xs md:text-sm  text-blue-600 text-right flex flex-nowrap items-center justify-end gap-1 sm:gap-2 leading-6 whitespace-nowrap overflow-x-auto "
             >
-                 کلیک کنید تا محصول به سبد خرید انتقال داده بشه 
+              کلیک کنید تا محصول به سبد خرید انتقال داده بشه
               <span
                 dir="rtl"
                 className="inline-flex items-center gap-1 whitespace-nowrap "
@@ -226,12 +225,11 @@ export default function LatestDiscountsSlider({}: LatestDiscountsSliderProps) {
                 </span>
               </span>
               برای سفارش محصول
-          
             </p>
           </div>
           <div className="flex items-center justify-end">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-green-600 text-right">
-              تخفیفات
+            <h2 className="text-lg md:text-xl font-extrabold text-green-600 text-right">
+              محصولات زیر ۶ میلیون تومان
             </h2>
             <div className="absolute left-0">
               <Link href="/search?discount=true">

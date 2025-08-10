@@ -50,7 +50,7 @@ export default function UserButtonClient() {
             sideOffset={8}
             forceMount
           >
-            <div className="bg-green-600 text-white px-4 py-3 text-right">
+            <div className="bg-white text-green-600 px-4 py-3 text-right">
               <p className="text-sm font-bold leading-none">
                 {session.user.name}
               </p>
@@ -97,7 +97,7 @@ export default function UserButtonClient() {
             sideOffset={8}
             forceMount
           >
-            <div className="bg-green-600 text-white px-4 py-3 text-right">
+            <div className="bg-white text-black px-4 py-3 text-right">
               <p className="text-sm font-bold leading-none">ورود به حساب</p>
               <p className="text-xs opacity-90 mt-1">برای ادامه وارد شوید</p>
             </div>
@@ -112,7 +112,13 @@ export default function UserButtonClient() {
                 ورود
               </Link>
               <div className="text-xs text-right mt-2">
-                مشتری جدید؟ <Link href="/sign-up">ثبت نام</Link>
+                مشتری جدید؟{" "}
+                <Link
+                  className="text-blue-600 hover:text-blue-700 underline"
+                  href="/sign-up"
+                >
+                  ثبت نام
+                </Link>
               </div>
             </div>
           </DropdownMenuContent>

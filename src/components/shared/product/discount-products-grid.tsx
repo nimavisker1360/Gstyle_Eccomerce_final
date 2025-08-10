@@ -54,12 +54,12 @@ export default function DiscountProductsGrid({
           if (now - timestamp < cacheExpiry) {
             console.log("✅ Using cached discount products from localStorage");
             const cachedProducts = JSON.parse(cached) as ShoppingProduct[];
-            // Filter to show only truly discounted items
-            const discountedOnly = cachedProducts.filter(
+            // Show products priced ≤ 2000 TRY (server already enforces)
+            const underTwoK = cachedProducts.filter(
               (p) =>
-                typeof p.originalPrice === "number" && p.originalPrice > p.price
+                typeof p.price === "number" && p.price > 0 && p.price <= 2000
             );
-            setProducts(discountedOnly);
+            setProducts(underTwoK);
             setLoading(false);
             return;
           }
@@ -74,14 +74,13 @@ export default function DiscountProductsGrid({
 
         const data = await response.json();
         const products = (data.products || []) as ShoppingProduct[];
-        const discountedOnly = products.filter(
-          (p) =>
-            typeof p.originalPrice === "number" && p.originalPrice > p.price
+        const underTwoK = products.filter(
+          (p) => typeof p.price === "number" && p.price > 0 && p.price <= 2000
         );
-        setProducts(discountedOnly);
+        setProducts(underTwoK);
 
         // Cache the results
-        localStorage.setItem(cacheKey, JSON.stringify(discountedOnly));
+        localStorage.setItem(cacheKey, JSON.stringify(underTwoK));
         localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
       } catch (err) {
         console.error("Error fetching discount products:", err);

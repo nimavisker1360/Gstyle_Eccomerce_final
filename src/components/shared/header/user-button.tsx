@@ -82,7 +82,13 @@ export default async function UserButton() {
             </DropdownMenuGroup>
             <DropdownMenuLabel>
               <div className="font-normal">
-                مشتری جدید؟ <Link href="/sign-up">ثبت نام</Link>
+                مشتری جدید؟{" "}
+                <Link
+                  className="text-blue-600 hover:text-blue-700 underline"
+                  href="/sign-up"
+                >
+                  ثبت نام
+                </Link>
               </div>
             </DropdownMenuLabel>
           </DropdownMenuContent>

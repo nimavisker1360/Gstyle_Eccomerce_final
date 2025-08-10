@@ -130,7 +130,9 @@ function DiscountProductsContent({ searchQuery }: { searchQuery?: string }) {
         <div className="mb-8">
           <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 shadow-lg border border-green-400">
             <div className="text-white text-center">
-              <h2 className="text-2xl font-bold mb-2">محصولات تخفیف دار</h2>
+              <h2 className="text-lg font-bold mb-2">
+                محصولات زیر ۶ میلیون تومان
+              </h2>
               <p className="text-green-100">
                 بهترین پیشنهادات و تخفیف‌های ویژه برای شما
               </p>

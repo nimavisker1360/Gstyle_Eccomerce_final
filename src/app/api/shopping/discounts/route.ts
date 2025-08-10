@@ -128,40 +128,27 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const forceRefresh = url.searchParams.get("refresh") === "true";
 
-    // 1) Try DB (daily cache) first: limit 40 (unless forceRefresh)
+    // 1) Try DB (daily cache) first: limit 40 items priced under 2000 TRY (unless forceRefresh)
     await connectToDatabase();
     if (!forceRefresh) {
-      const dbProducts = await DiscountProduct.find({})
+      const dbProducts = await DiscountProduct.find({ price: { $lt: 2000 } })
         .sort({ createdAt: -1 })
         .limit(100)
         .lean();
 
       if (dbProducts && dbProducts.length >= 40) {
-        // Only keep truly discounted items (originalPrice > price OR previousPrice > price)
-        const discountedOnly = dbProducts.filter((p: any) => {
-          const price = Number(p.price || 0);
-          const hasOriginalDiscount =
-            typeof p.originalPrice === "number" &&
-            Number(p.originalPrice) > price;
-          const hasPreviousDiscount =
-            typeof p.previousPrice === "number" &&
-            Number(p.previousPrice) > price;
-          return hasOriginalDiscount || hasPreviousDiscount;
-        });
-
-        // Ensure originalPrice exists for UI when valid; do NOT fabricate discounts here
-        const normalized = discountedOnly.map((p: any) => ({
+        // Already filtered by price in DB query; just normalize shape
+        const normalized = dbProducts.map((p: any) => ({
           ...p,
-          originalPrice: p.originalPrice,
         }));
 
         console.log(
-          `✅ Returning ${normalized.length} discounted products from DB daily cache`
+          `✅ Returning ${normalized.length} under-2000₺ products from DB daily cache`
         );
         return NextResponse.json({
           products: normalized.slice(0, 40),
           total: Math.min(normalized.length, 40),
-          message: `${Math.min(normalized.length, 40)} محصول تخفیف‌دار از کش روزانه (DB) یافت شد`,
+          message: `${Math.min(normalized.length, 40)} محصول زیر ۲۰۰۰ لیر از کش روزانه (DB) یافت شد`,
           cached: true,
           source: "db",
         });
@@ -202,18 +189,17 @@ export async function GET(request: NextRequest) {
       () => Math.random() - 0.5
     );
 
-    // Add random variation words for more diverse results
+    // Add random variation words to bias towards very cheap items
     const randomVariations = [
       "en uygun",
       "özel fiyat",
-      "büyük indirim",
-      "fırsat",
-      "kampanya",
       "ucuz",
       "avantajlı",
       "ekonomik",
       "uygun",
-      "son fiyat",
+      "1 tl",
+      "2 tl",
+      "2 tl altında",
     ];
 
     // البحث باستخدام استفسارات متعددة للحصول على منتجات متنوعة
@@ -265,79 +251,48 @@ export async function GET(request: NextRequest) {
             `📂 Filtered to ${filteredProducts.length} products from header categories`
           );
 
-          // معالجة النتائج - optimized processing with reduced AI calls
+          // پردازش نتایج: فقط محصولات با قیمت ≤ 2000 لیر
           const processedProducts = filteredProducts
-            .slice(0, 15)
+            .slice(0, 30)
             .map((product: any, index: number) => {
-              // التحقق من وجود تخفيض (سعر أصلي أعلى من السعر الحالي)
-              let hasDiscount = false;
-              let originalPrice = null;
-              let currentPrice = 0;
+              let currentPrice = Number.NaN;
 
-              // استخراج الأسعار مع validation منطقی
-              console.log(`🔍 Product ${index + 1}: ${product.title}`);
-              console.log(`💰 Raw price data:`, {
-                extracted_price: product.extracted_price,
-                extracted_original_price: product.extracted_original_price,
-                price: product.price,
-                price_range: product.price_range,
-              });
-
-              // تلاش برای استخراج قیمت از فیلدهای مختلف
-              if (product.extracted_price && product.extracted_price >= 20) {
+              // Try numeric extracted price first
+              if (
+                typeof product.extracted_price === "number" &&
+                Number.isFinite(product.extracted_price)
+              ) {
                 currentPrice = product.extracted_price;
-                console.log(`✅ Using extracted_price: ${currentPrice}`);
-                if (
-                  product.extracted_original_price &&
-                  product.extracted_original_price > currentPrice
-                ) {
-                  originalPrice = product.extracted_original_price;
-                  hasDiscount = true;
-                  console.log(`✅ Found original price: ${originalPrice}`);
-                }
-              } else if (product.price && typeof product.price === "string") {
-                // تحليل السعر من النص
-                const priceMatch = product.price.match(/[\d,.]+(\.?\d+)?/);
+              }
+
+              // Fallback: parse from price string like "₺1,99"
+              if (
+                !Number.isFinite(currentPrice) &&
+                product.price &&
+                typeof product.price === "string"
+              ) {
+                const priceMatch = product.price.match(/[\d,.]+/);
                 if (priceMatch) {
-                  const parsedPrice = parseFloat(
-                    priceMatch[0].replace(",", "")
-                  );
-                  if (parsedPrice >= 20) {
-                    currentPrice = parsedPrice;
-                    console.log(`✅ Using parsed price: ${currentPrice}`);
-                  } else {
-                    console.log(`❌ Parsed price too low: ${parsedPrice}`);
+                  const normalized = priceMatch[0]
+                    .replace(/\./g, "")
+                    .replace(/,/g, ".");
+                  const parsed = parseFloat(normalized);
+                  if (Number.isFinite(parsed)) {
+                    currentPrice = parsed;
                   }
                 }
-              } else {
-                console.log(`❌ No valid price found in raw data`);
               }
 
-              // اگر قیمت منطقی پیدا نشد، قیمت تقریبی تولید کن
-              if (currentPrice < 20) {
-                console.log(
-                  `🔧 Generating fallback price for: ${product.title}`
-                );
-                // تولید قیمت تصادفی منطقی بین 25 تا 500 لیر
-                currentPrice = Math.floor(Math.random() * 475) + 25;
-
-                // تولید قیمت اصلی با تخفیف 10-40 درصد
-                const discountPercent = Math.floor(Math.random() * 30) + 10;
-                originalPrice = Math.round(
-                  currentPrice / (1 - discountPercent / 100)
-                );
-                hasDiscount = true;
-                console.log(
-                  `🔧 Generated prices: ${currentPrice} TRY (was ${originalPrice} TRY, ${discountPercent}% off)`
-                );
+              // If still not a number or price is not under/eq 2000 TRY, skip
+              if (
+                !Number.isFinite(currentPrice) ||
+                currentPrice <= 0 ||
+                currentPrice > 2000
+              ) {
+                return null;
               }
 
-              console.log(
-                `💰 Final prices: Current: ${currentPrice} TRY, Original: ${originalPrice} TRY`
-              );
-              console.log(`---`);
-
-              // إنشاء رابط Google Shopping
+              // Build product
               let googleShoppingLink = "";
               if (product.product_id) {
                 googleShoppingLink = `https://www.google.com.tr/shopping/product/${product.product_id}?gl=tr`;
@@ -347,8 +302,6 @@ export async function GET(request: NextRequest) {
                 googleShoppingLink = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product.title)}`;
               }
 
-              // Skip AI translation for better performance
-              // Use original title for now, can add translation in background job
               const persianTitle = product.title;
 
               return {
@@ -356,8 +309,7 @@ export async function GET(request: NextRequest) {
                 title: persianTitle,
                 originalTitle: product.title,
                 price: currentPrice,
-                // Do not fabricate originalPrice. Keep null if unknown so we can reliably detect real discounts
-                originalPrice: originalPrice ?? null,
+                originalPrice: null,
                 currency: "TRY",
                 image: product.thumbnail || "/images/placeholder.jpg",
                 description: product.snippet || persianTitle,
@@ -365,14 +317,12 @@ export async function GET(request: NextRequest) {
                 link: product.link,
                 googleShoppingLink: googleShoppingLink,
                 source: product.source || "Google Shopping",
-                rating: product.rating
-                  ? parseFloat(product.rating)
-                  : Math.floor(Math.random() * 2) + 3, // تقييم عشوائي بين 3-5
-                reviews:
-                  product.reviews || Math.floor(Math.random() * 500) + 50, // مراجعات عشوائية
-                delivery: product.delivery || "توصيل سريع",
+                rating: product.rating ? parseFloat(product.rating) : 4,
+                reviews: product.reviews || 100,
+                delivery: product.delivery || "",
               } as ShoppingProduct;
-            });
+            })
+            .filter(Boolean) as ShoppingProduct[];
 
           return processedProducts;
         } else {
@@ -412,33 +362,17 @@ export async function GET(request: NextRequest) {
       `🎯 Final category filter: ${uniqueProducts.length} → ${categoryFilteredProducts.length} products`
     );
 
-    // Prefer products with strong discounts (>= 20%), then by rating
-    const withStrongDiscount = categoryFilteredProducts
-      .filter((p) => p.originalPrice && p.originalPrice > p.price)
-      .map((p) => ({
-        product: p,
-        percent: Math.round(
-          ((p.originalPrice! - p.price) / p.originalPrice!) * 100
-        ),
-      }))
-      .filter((x) => x.percent >= 20)
-      .sort((a, b) => b.percent - a.percent)
-      .map((x) => x.product);
-
-    // Fallback pool sorted by rating
-    const fallbackByRating = categoryFilteredProducts
-      .filter((p) => !withStrongDiscount.includes(p))
+    // Only keep products priced at or under 2000 TRY
+    const underTwoLira = categoryFilteredProducts
+      .filter(
+        (p) => typeof p.price === "number" && p.price > 0 && p.price <= 2000
+      )
       .sort((a, b) => b.rating - a.rating);
 
-    // Only keep products that truly have a discount
-    const discountedOnly = withStrongDiscount;
+    // Pick top 40 products for daily set
+    const finalProducts = underTwoLira.slice(0, 40);
 
-    // Pick top 40 discounted products for daily set
-    const finalProducts = discountedOnly.slice(0, 40);
-
-    console.log(
-      `✅ Returning ${finalProducts.length} unique discount products`
-    );
+    console.log(`✅ Returning ${finalProducts.length} products priced ≤ 2000₺`);
 
     // 3) Upsert into DB as daily cache (ensure 40 stored)
     try {
@@ -486,16 +420,16 @@ export async function GET(request: NextRequest) {
           id: { $nin: currentIds },
         });
         console.log(
-          `🗑️ Removed ${removalResult.deletedCount || 0} products no longer present in the latest discounts`
+          `🗑️ Removed ${removalResult.deletedCount || 0} products no longer present in the latest under-2000₺ list`
         );
 
-        // Additionally, remove any records that no longer have a valid discount (safety net)
+        // Additionally, remove any records priced ≥ 2000 TRY (safety net)
         const invalidDiscountRemoval = await DiscountProduct.deleteMany({
-          $expr: { $not: { $gt: ["$originalPrice", "$price"] } },
+          price: { $gte: 2000 },
         });
         if (invalidDiscountRemoval.deletedCount) {
           console.log(
-            `🧹 Cleaned ${invalidDiscountRemoval.deletedCount} non-discounted records from DB`
+            `🧹 Cleaned ${invalidDiscountRemoval.deletedCount} records priced ≥ 2000₺ from DB`
           );
         }
       }
@@ -515,8 +449,8 @@ export async function GET(request: NextRequest) {
       total: finalProducts.length,
       message:
         finalProducts.length > 0
-          ? `${finalProducts.length} محصول تخفیف‌دار یافت شد`
-          : "هیچ محصول تخفیف‌داری یافت نشد",
+          ? `${finalProducts.length} محصول زیر ۲۰۰۰ لیر یافت شد`
+          : "هیچ محصولی زیر ۲۰۰۰ لیر یافت نشد",
       cached: false,
       source: "serpapi",
     });
