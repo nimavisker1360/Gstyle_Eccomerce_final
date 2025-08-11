@@ -361,7 +361,7 @@ export default function IntelligentBeautySearch({
 
                       {/* Product Info */}
                       <div className="space-y-3">
-                        <h3 className="font-bold text-gray-800 line-clamp-2 group-hover:text-pink-600 transition-colors">
+                        <h3 className="font-medium text-black line-clamp-2 group-hover:text-pink-600 transition-colors">
                           {product.title}
                         </h3>
 
@@ -381,7 +381,7 @@ export default function IntelligentBeautySearch({
 
                         {/* Price */}
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-green-600">
+                          <span className="text-base font-medium text-green-600">
                             {formatPriceToman(product.price, product.currency)}
                           </span>
                         </div>

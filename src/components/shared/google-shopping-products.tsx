@@ -175,7 +175,7 @@ export default function GoogleShoppingProducts() {
 
                 <CardHeader className="pb-3">
                   <CardTitle
-                    className="text-sm font-medium text-gray-900 line-clamp-2"
+                    className="text-sm font-medium text-black line-clamp-2"
                     style={{ fontFamily: "BYekan, sans-serif" }}
                   >
                     {product.title_fa}
@@ -188,7 +188,7 @@ export default function GoogleShoppingProducts() {
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between mb-4">
                     <span
-                      className="text-lg font-bold text-green-600"
+                      className="text-base font-medium text-green-600"
                       style={{ fontFamily: "BYekan, sans-serif" }}
                     >
                       {product.price}

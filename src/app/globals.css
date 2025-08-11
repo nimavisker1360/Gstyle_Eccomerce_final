@@ -74,12 +74,71 @@
   }
 }
 
+/* Import BYekan font (user preference) */
+@font-face {
+  font-family: "BYekan";
+  src: url("/fonts/BYekan/BYekan+.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "BYekan";
+  src: url("/fonts/BYekan/BYekan+ Bold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Utility class to use BYekan where desired */
+.font-byekan {
+  font-family:
+    "BYekan",
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
+}
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "BYekan", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  /* Reduce font weights globally */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: #000000;
+  }
+  
+  /* Reduce font sizes */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.125rem; }
+  h4 { font-size: 1rem; }
+  h5 { font-size: 0.875rem; }
+  h6 { font-size: 0.75rem; }
+  
+  /* Make text less bold by default */
+  p, span, div, a, button, input, textarea, select {
+    font-weight: 400;
+  }
+  
+  /* Strong and bold elements */
+  strong, b {
+    font-weight: 600;
   }
 }
 
@@ -126,12 +185,34 @@
     @apply cursor-pointer p-1 border border-transparent hover:border-white rounded-[2px];
   }
   .h1-bold {
-    @apply font-bold text-2xl lg:text-3xl;
+    @apply font-semibold text-xl lg:text-2xl text-black;
   }
   .h2-bold {
-    @apply font-bold text-lg lg:text-xl;
+    @apply font-semibold text-lg lg:text-xl text-black;
   }
   .flex-between {
     @apply flex justify-between items-center;
+  }
+  
+  /* Title styles with black color */
+  .title-black {
+    color: #000000;
+    font-weight: 600;
+  }
+  
+  /* Reduced icon sizes */
+  .icon-sm {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .icon-md {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .icon-lg {
+    width: 24px;
+    height: 24px;
   }
 }

@@ -47,10 +47,10 @@ const ProductCard = ({
   )
   const ProductDetails = () => (
     <div className='flex-1 space-y-2'>
-      <p className='font-bold'>{product.brand}</p>
+      <p className='font-medium text-black'>{product.brand}</p>
       <Link
         href={`/product/${product.slug}`}
-        className='overflow-hidden text-ellipsis'
+        className='overflow-hidden text-ellipsis text-black'
         style={{
           display: '-webkit-box',
           WebkitLineClamp: 2,
@@ -61,7 +61,7 @@ const ProductCard = ({
       </Link>
       <div className='flex gap-2 justify-center'>
         <Rating rating={product.avgRating} />
-        <span>({formatNumber(product.numReviews)})</span>
+        <span className="text-sm">({formatNumber(product.numReviews)})</span>
       </div>
 
       <ProductPrice

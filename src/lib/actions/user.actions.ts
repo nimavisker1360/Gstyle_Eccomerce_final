@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { connectToDatabase } from "@/lib/db";
 import User from "@/lib/db/models/user.model";
 import { formatError } from "../utils";
+import { revalidatePath } from "next/cache";
 
 import bcrypt from "bcryptjs";
 import { UserSignUpSchema } from "../validator";
@@ -77,6 +78,7 @@ export async function registerUser(userSignUp: IUserSignUp) {
     const user = await UserSignUpSchema.parseAsync({
       name: userSignUp.name,
       email: userSignUp.email,
+      mobile: userSignUp.mobile,
       password: userSignUp.password,
       confirmPassword: userSignUp.confirmPassword,
     });
@@ -89,5 +91,85 @@ export async function registerUser(userSignUp: IUserSignUp) {
     return { success: true, message: "User created successfully" };
   } catch (error) {
     return { success: false, error: formatError(error) };
+  }
+}
+
+// Fetch minimal profile for account page
+export async function getUserProfile(userId: string) {
+  try {
+    await connectToDatabase();
+    const user = await User.findById(userId).select(
+      "name email image mobile address.phone"
+    );
+    if (!user) return null;
+    return {
+      id: String(user._id),
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      mobile: user.mobile || "",
+      phone: user.address?.phone || "",
+    };
+  } catch (error) {
+    console.error("getUserProfile error", error);
+    return null;
+  }
+}
+
+// Update user's mobile number
+export async function updateUserMobile(userId: string, mobile: string) {
+  try {
+    await connectToDatabase();
+    await User.findByIdAndUpdate(userId, { mobile }, { new: true });
+
+    revalidatePath("/(root)/account");
+    revalidatePath("/account");
+    return { success: true, message: "شماره موبایل با موفقیت به‌روزرسانی شد" };
+  } catch (error) {
+    console.error("updateUserMobile error", error);
+    return { success: false, error: "خطا در به‌روزرسانی شماره موبایل" };
+  }
+}
+
+// Update user's avatar image; stores as base64 data URL for simplicity
+export async function updateUserAvatar(formData: FormData) {
+  try {
+    const userId = formData.get("userId") as string | null;
+    const file = formData.get("avatar") as File | null;
+
+    if (!userId) {
+      return { success: false, error: "شناسه کاربر یافت نشد" };
+    }
+    if (!file || file.size === 0) {
+      return { success: false, error: "تصویر نامعتبر است" };
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Best-effort mime detection from filename
+    const fileName = (file as any).name || "avatar.png";
+    const extension = fileName.split(".").pop()?.toLowerCase();
+    const mime =
+      extension === "jpg" || extension === "jpeg"
+        ? "image/jpeg"
+        : extension === "png"
+          ? "image/png"
+          : extension === "webp"
+            ? "image/webp"
+            : "image/png";
+
+    const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
+
+    await connectToDatabase();
+    await User.findByIdAndUpdate(userId, { image: base64 }, { new: true });
+
+    // Revalidate account route so fresh image is shown on the same page
+    revalidatePath("/(root)/account");
+    revalidatePath("/account");
+    return { success: true };
+  } catch (error) {
+    console.error("updateUserAvatar error", error);
+    return { success: false, error: "خطا در ذخیره تصویر" };
   }
 }

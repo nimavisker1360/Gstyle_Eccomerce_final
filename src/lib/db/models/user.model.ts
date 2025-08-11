@@ -22,6 +22,7 @@ const userSchema = new Schema<IUser>(
     password: { type: String },
     image: { type: String },
     emailVerified: { type: Boolean, default: false },
+    mobile: { type: String },
     paymentMethod: { type: String },
     address: {
       fullName: { type: String },

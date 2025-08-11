@@ -22,10 +22,10 @@ export default function FashionSearchPage({
       <div className="bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            <h1 className="text-2xl md:text-3xl font-semibold mb-4 text-black">
               👗 جستجوی هوشمند مد و پوشاک
             </h1>
-            <p className="text-lg md:text-xl mb-6 text-pink-100">
+            <p className="text-base md:text-lg mb-6 text-pink-100">
               از بهترین فروشگاه‌های مد ترکیه با ترجمه خودکار فارسی به ترکی
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-sm">

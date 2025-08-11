@@ -32,8 +32,8 @@ export default async function SignIn(props: {
     <div className="w-full" dir="rtl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl text-center text-sky-700">
-            Sign In
+          <CardTitle className="text-xl text-center title-black">
+            ورود به حساب
           </CardTitle>
         </CardHeader>
 

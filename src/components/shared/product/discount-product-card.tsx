@@ -160,7 +160,7 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
         {/* Product Title */}
         <div className="mb-2">
           <div
-            className="text-sm font-medium text-gray-800 line-clamp-2 text-right min-h-[2.5rem]"
+            className="text-sm font-medium text-black line-clamp-2 text-right min-h-[2.5rem]"
             style={{
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -188,7 +188,7 @@ const DiscountProductCard = ({ product }: DiscountProductCardProps) => {
               {formatToman(basePriceToman)}
             </span>
           )}
-          <span className="text-sm md:text-base font-bold text-red-600 tabular-nums">
+          <span className="text-sm md:text-base font-medium text-red-600 tabular-nums">
             {formatToman(displayedPriceToman)}
           </span>
         </div>

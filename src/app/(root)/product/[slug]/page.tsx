@@ -65,7 +65,7 @@ export default async function ProductDetails(props: {
               <p className="p-medium-16 rounded-full bg-grey-500/10   text-grey-500">
                 برند {product.brand} {product.category}
               </p>
-              <h1 className="font-bold text-lg lg:text-xl">{product.name}</h1>
+              <h1 className="font-semibold text-lg lg:text-xl text-black">{product.name}</h1>
               <div className="flex items-center gap-2">
                 <RatingSummary
                   avgRating={product.avgRating}
@@ -95,7 +95,7 @@ export default async function ProductDetails(props: {
             </div>
             <Separator className="my-2" />
             <div className="flex flex-col gap-2">
-              <p className="p-bold-20 text-grey-600">توضیحات:</p>
+              <p className="p-semibold-18 text-black">توضیحات:</p>
               <p className="p-medium-16 lg:p-regular-18">
                 {product.description}
               </p>

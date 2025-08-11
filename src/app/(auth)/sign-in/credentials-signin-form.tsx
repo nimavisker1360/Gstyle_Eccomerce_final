@@ -23,6 +23,7 @@ import { APP_NAME } from "@/lib/constants";
 
 const signInDefaultValues = {
   email: "",
+  mobile: "",
   password: "",
 };
 
@@ -129,6 +130,27 @@ export default function CredentialsSignInForm() {
 
           <FormField
             control={control}
+            name="mobile"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel className="text-right w-full">
+                  شماره موبایل (اختیاری)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="text-right"
+                    type="tel"
+                    {...field}
+                    placeholder="شماره موبایل را وارد کنید "
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
             name="password"
             render={({ field }) => (
               <FormItem className="w-full">
@@ -151,11 +173,11 @@ export default function CredentialsSignInForm() {
               type="submit"
               className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
             >
-              Sign In
+              ورود
             </Button>
           </div>
           <div className="text-sm text-right">
-            با انجام Sign In، با قوانین {APP_NAME} موافقت می‌کنید:{" "}
+            با انجام ورود، با قوانین {APP_NAME} موافقت می‌کنید:{" "}
             <Link href="/page/conditions-of-use">شرایط استفاده</Link> و{" "}
             <Link href="/page/privacy-policy">سیاست حریم خصوصی</Link>.
           </div>

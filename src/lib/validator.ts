@@ -172,6 +172,7 @@ export const UserInputSchema = z.object({
   emailVerified: z.boolean(),
   role: UserRole,
   password: Password,
+  mobile: z.string().optional(),
   paymentMethod: z.string().min(1, "Payment method is required"),
   address: z.object({
     fullName: z.string().min(1, "Full name is required"),
@@ -186,11 +187,17 @@ export const UserInputSchema = z.object({
 
 export const UserSignInSchema = z.object({
   email: Email,
+  mobile: z.string().optional(),
   password: Password,
 });
 
 export const UserSignUpSchema = UserSignInSchema.extend({
   name: UserName,
+  mobile: z
+    .string()
+    .min(11, "شماره موبایل باید حداقل ۱۱ رقم باشد")
+    .max(11, "شماره موبایل باید حداکثر ۱۱ رقم باشد")
+    .regex(/^09\d{9}$/, "شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد"),
   confirmPassword: Password,
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",

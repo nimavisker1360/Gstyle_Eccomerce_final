@@ -41,10 +41,10 @@ export default function CartPage() {
                 className="flex items-center justify-between gap-6"
               >
                 <div className="flex-1 text-right">
-                  <h2 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-l from-green-700 to-blue-700 bg-clip-text text-transparent">
+                  <h2 className="text-2xl md:text-3xl font-bold text-black">
                     سبد خرید شما خالی است
                   </h2>
-                  <p className="mt-3 text-sm md:text-base text-green-700/80">
+                  <p className="mt-2 text-xs md:text-sm text-black">
                     هنوز محصولی اضافه نکرده‌اید. برای شروع خرید، به صفحه اصلی
                     بروید.
                   </p>
@@ -190,7 +190,7 @@ export default function CartPage() {
                   </div>
                   <Button
                     onClick={() => router.push("/checkout")}
-                    className="rounded-full w-full bg-green-600 hover:bg-green-700"
+                    className="rounded-none w-full bg-green-600 hover:bg-green-700"
                   >
                     ادامه به تسویه حساب
                   </Button>

@@ -361,7 +361,7 @@ export default function IntelligentSearch({
           ) : (
             <>
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">
+                <h2 className="text-xl font-semibold text-black">
                   {categoryIcon} {products.length} محصول {category} یافت شد
                 </h2>
                 <Badge variant="secondary" className="text-sm">

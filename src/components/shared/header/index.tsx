@@ -27,7 +27,7 @@ export default function Header() {
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center header-button font-extrabold text-2xl"
+              className="flex items-center header-button font-semibold text-xl"
             >
               <Image
                 src="/icons/logo01.png"

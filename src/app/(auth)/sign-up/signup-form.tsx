@@ -27,6 +27,7 @@ import { APP_NAME } from "@/lib/constants";
 const signUpDefaultValues = {
   name: "",
   email: "",
+  mobile: "",
   password: "",
   confirmPassword: "",
 };
@@ -132,6 +133,31 @@ export default function SignUpForm() {
 
           <FormField
             control={control}
+            name="mobile"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel className="text-right w-full">
+                  شماره موبایل
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="text-right"
+                    placeholder="شماره موبایل را وارد کنید (مثال: 09123456789)"
+                    type="tel"
+                    maxLength={11}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+                <p className="text-xs text-gray-500 text-right mt-1">
+                  شماره موبایل برای ارتباط بهتر و اطلاع‌رسانی سفارشات ضروری است
+                </p>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
             name="password"
             render={({ field }) => (
               <FormItem className="w-full">
@@ -173,7 +199,7 @@ export default function SignUpForm() {
               type="submit"
               className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
             >
-              Sign Up
+              ثبت نام
             </Button>
           </div>
           <div className="text-sm text-right">
@@ -185,7 +211,7 @@ export default function SignUpForm() {
           <div className="text-sm text-right">
             قبلاً حساب دارید؟{" "}
             <Link className="link" href={`/sign-in?callbackUrl=${callbackUrl}`}>
-              Sign In
+              ورود به حساب
             </Link>
           </div>
         </div>
