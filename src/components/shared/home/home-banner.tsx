@@ -27,7 +27,7 @@ export function HomeBanner() {
     <div className="w-full relative overflow-hidden">
       {/* Banner container aligned with header */}
       <div className="sm:max-w-7xl sm:mx-auto sm:px-6 md:px-8">
-        <div className="bg-white sm:border sm:border-gray-200 rounded-none sm:rounded-lg shadow-none sm:shadow-lg overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
           <div className="relative overflow-hidden">
             {/* Carousel container */}
             <div
