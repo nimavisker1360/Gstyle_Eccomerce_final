@@ -45,10 +45,16 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { createOrder } from "@/lib/actions/order.actions";
 import FullscreenLoading from "@/components/shared/fullscreen-loading";
+import { ArrowLeft } from "lucide-react";
 
 const shippingAddressDefaultValues = {
   fullName: "",
+  street: "",
+  city: "",
+  postalCode: "",
+  province: "",
   phone: "",
+  country: "",
 };
 
 const CheckoutForm = () => {
@@ -112,6 +118,18 @@ const CheckoutForm = () => {
         description: "اطلاعات شما برای پشتیبانی ارسال شد.",
         variant: "success",
       });
+
+      // Reset the form
+      shippingAddressForm.reset();
+
+      // Reset checkout states to go back to first step
+      setIsAddressSelected(false);
+      setIsPaymentMethodSelected(false);
+      setIsDeliveryDateSelected(false);
+
+      // Clear shipping address from cart
+      setShippingAddress(shippingAddressDefaultValues);
+
       // brief delay for UX so the loader is visible
       setTimeout(() => router.push("/"), 400);
     } catch {
@@ -125,7 +143,7 @@ const CheckoutForm = () => {
   };
 
   useEffect(() => {
-    if (!isMounted || !shippingAddress) return;
+    if (!isMounted || !shippingAddress || !shippingAddress.fullName) return;
     shippingAddressForm.setValue("fullName", shippingAddress.fullName);
     // street removed
     // Simplified fields per new checkout form
@@ -267,6 +285,18 @@ const CheckoutForm = () => {
           subtitle="لطفاً صبر کنید، به‌زودی به خانه هدایت می‌شوید"
         />
       )}
+
+      {/* Back Button */}
+      <div className="mb-4 flex justify-end">
+        <Button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          بازگشت
+        </Button>
+      </div>
+
       <div className="grid md:grid-cols-4 gap-6">
         <div className="md:col-span-3">
           {/* shipping address */}
