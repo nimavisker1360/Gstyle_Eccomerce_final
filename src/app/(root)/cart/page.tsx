@@ -180,14 +180,7 @@ export default function CartPage() {
                       </span>{" "}
                       از محصولات واجد شرایط به سفارش خود برای ارسال رایگان
                     </div>
-                  ) : (
-                    <div className="flex-1">
-                      <span className="text-green-700">
-                        سفارش شما واجد شرایط ارسال رایگان است
-                      </span>{" "}
-                      این گزینه را در زمان تسویه حساب انتخاب کنید
-                    </div>
-                  )}
+                  ) : null}
                   <div className="text-lg">
                     جمع کل (
                     {items.reduce((acc, item) => acc + item.quantity, 0)} آیتم):{" "}
