@@ -176,11 +176,11 @@ export default function CredentialsSignInForm() {
               ورود
             </Button>
           </div>
-          <div className="text-sm text-right">
+          {/* <div className="text-sm text-right">
             با انجام ورود، با قوانین {APP_NAME} موافقت می‌کنید:{" "}
             <Link href="/page/conditions-of-use">شرایط استفاده</Link> و{" "}
-            <Link href="/page/privacy-policy">سیاست حریم خصوصی</Link>.
-          </div>
+            <Link href="/page/privacy-policy">قوانین و مقررات</Link>.
+          </div> */}
         </div>
       </form>
     </Form>

@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { redirect, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ const signUpDefaultValues = {
 };
 
 export default function SignUpForm() {
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
@@ -142,7 +144,7 @@ export default function SignUpForm() {
                 <FormControl>
                   <Input
                     className="text-right"
-                    placeholder="شماره موبایل را وارد کنید (مثال: 09123456789)"
+                    placeholder="شماره موبایل را وارد کنید"
                     type="tel"
                     maxLength={11}
                     {...field}
@@ -197,15 +199,42 @@ export default function SignUpForm() {
           <div>
             <Button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+              disabled={!agreedToTerms}
+              aria-disabled={!agreedToTerms}
+              className={`w-full flex items-center justify-center gap-2 text-white ${
+                agreedToTerms
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-green-500/50 hover:bg-green-500/50 cursor-not-allowed"
+              }`}
             >
               ثبت نام
             </Button>
           </div>
           <div className="text-sm text-right">
-            با ایجاد حساب کاربری، با قوانین {APP_NAME} موافقت می‌کنید:{" "}
-            <Link href="/page/conditions-of-use">شرایط استفاده</Link> و{" "}
-            <Link href="/page/privacy-policy">سیاست حریم خصوصی</Link>.
+            با ایجاد حساب کاربری، با قوانین {APP_NAME} موافقت می‌کنید:
+            <div
+              className="mt-2 flex flex-row-reverse items-center gap-2 justify-end"
+              dir="rtl"
+            >
+              <input
+                id="agree-terms"
+                type="checkbox"
+                className="w-4 h-4 cursor-pointer accent-emerald-600"
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                checked={agreedToTerms}
+              />
+              <label
+                htmlFor="agree-terms"
+                className="cursor-pointer select-none text-right"
+              >
+                <Link
+                  href="/page/privacy-policy"
+                  className="hover:!no-underline"
+                >
+                  قوانین و مقررات را قبول دارم{" "}
+                </Link>
+              </label>
+            </div>
           </div>
           <Separator className="mb-4" />
           <div className="text-sm text-right">
