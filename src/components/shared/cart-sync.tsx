@@ -22,44 +22,20 @@ export default function CartSync() {
         const json = await res.json();
         const server = json?.data ?? null;
         const serverItems = Array.isArray(server?.items) ? server.items : [];
-        const localItems = Array.isArray(cart.items) ? cart.items : [];
-
-        // Merge strategy on first login hydration:
-        // - If both have items: merge by (product,color,size) summing quantities (capped by countInStock)
-        // - If only local has items: keep local
-        // - Otherwise: keep server
-        const keyOf = (it: any) =>
-          `${it.product}__${it.color ?? ""}__${it.size ?? ""}`;
-        const mergedMap = new Map<string, any>();
-        for (const it of serverItems) mergedMap.set(keyOf(it), { ...it });
-        for (const it of localItems) {
-          const k = keyOf(it);
-          if (mergedMap.has(k)) {
-            const ex = mergedMap.get(k);
-            const sumQ = Math.min(
-              (ex.quantity ?? 0) + (it.quantity ?? 0),
-              ex.countInStock ?? it.countInStock ?? 999999
-            );
-            mergedMap.set(k, { ...ex, quantity: sumQ });
-          } else {
-            mergedMap.set(k, { ...it });
-          }
-        }
-        const mergedItems =
-          serverItems.length || localItems.length
-            ? Array.from(mergedMap.values())
-            : [];
-
-        const normalized = {
-          items: mergedItems,
-          itemsPrice: server?.itemsPrice ?? 0,
-          taxPrice: server?.taxPrice ?? undefined,
-          shippingPrice: server?.shippingPrice ?? undefined,
-          totalPrice: server?.totalPrice ?? 0,
-          paymentMethod: server?.paymentMethod ?? undefined,
-          shippingAddress: server?.shippingAddress ?? undefined,
-          deliveryDateIndex: server?.deliveryDateIndex ?? undefined,
-        };
+        // Prefer server cart when available to avoid double-counting on refresh.
+        // If server is empty, keep the existing local cart as-is.
+        const normalized = serverItems.length
+          ? {
+              items: serverItems,
+              itemsPrice: server?.itemsPrice ?? 0,
+              taxPrice: server?.taxPrice ?? undefined,
+              shippingPrice: server?.shippingPrice ?? undefined,
+              totalPrice: server?.totalPrice ?? 0,
+              paymentMethod: server?.paymentMethod ?? undefined,
+              shippingAddress: server?.shippingAddress ?? undefined,
+              deliveryDateIndex: server?.deliveryDateIndex ?? undefined,
+            }
+          : cart;
 
         replaceCart(normalized);
         lastSyncedRef.current = JSON.stringify(normalized);
@@ -76,7 +52,7 @@ export default function CartSync() {
       }
     };
     load();
-  }, [status, replaceCart, cart.items]);
+  }, [status]);
 
   // Persist cart on any change while logged in
   useEffect(() => {
