@@ -7,13 +7,13 @@ export default function GoogleShoppingPage() {
         <div className="container mx-auto px-4 py-8">
           <h1
             className="text-3xl font-bold text-gray-900 mb-2"
-            style={{ fontFamily: "BYekan, sans-serif" }}
+            style={{ fontFamily: "IRANSans, sans-serif" }}
           >
             محصولات گوگل شاپینگ
           </h1>
           <p
             className="text-gray-600"
-            style={{ fontFamily: "BYekan, sans-serif" }}
+            style={{ fontFamily: "IRANSans, sans-serif" }}
           >
             محصولات دسته‌بندی شده از Google Shopping با ترجمه فارسی
           </p>

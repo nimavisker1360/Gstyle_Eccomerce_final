@@ -227,7 +227,7 @@ export default function ShoppingProductCard({
               <Button
                 asChild
                 variant="secondary"
-                className={`w-full h-7 ${
+                className={`w-full h-7 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 ${
                   product.googleShoppingLink ? "" : "col-span-2"
                 }`}
                 size="sm"

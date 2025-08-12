@@ -141,7 +141,7 @@ export default function GoogleShoppingProducts() {
           <div className="flex items-center justify-between mb-6">
             <h2
               className="text-2xl font-bold text-gray-900"
-              style={{ fontFamily: "BYekan, sans-serif" }}
+              style={{ fontFamily: "IRANSans, sans-serif" }}
             >
               {categoryLabels[category] || category}
             </h2>
@@ -176,7 +176,7 @@ export default function GoogleShoppingProducts() {
                 <CardHeader className="pb-3">
                   <CardTitle
                     className="text-sm font-medium text-black line-clamp-2"
-                    style={{ fontFamily: "BYekan, sans-serif" }}
+                    style={{ fontFamily: "IRANSans, sans-serif" }}
                   >
                     {product.title_fa}
                   </CardTitle>
@@ -189,7 +189,7 @@ export default function GoogleShoppingProducts() {
                   <div className="flex items-center justify-between mb-4">
                     <span
                       className="text-base font-medium text-green-600"
-                      style={{ fontFamily: "BYekan, sans-serif" }}
+                      style={{ fontFamily: "IRANSans, sans-serif" }}
                     >
                       {product.price}
                     </span>

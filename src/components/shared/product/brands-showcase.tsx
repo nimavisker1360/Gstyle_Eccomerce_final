@@ -27,7 +27,7 @@ export default function BrandsShowcase() {
       <h2
         className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-green-600"
         style={{
-          fontFamily: "BYekan",
+          fontFamily: "IRANSans",
         }}
       >
         برندها

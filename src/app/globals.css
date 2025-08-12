@@ -2,19 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import Vazirmatn font */
+/* IRANSans font faces */
 @font-face {
-  font-family: "Vazirmatn";
-  src: url("/fonts/Vazirmatn/Vazirmatn-Thin.woff") format("woff");
-  font-weight: 100;
+  font-family: "IRANSans";
+  src:
+    url("/fonts/woff2/IRANSansWeb_UltraLight.woff2") format("woff2"),
+    url("/fonts/woff/IRANSansWeb_UltraLight.woff") format("woff"),
+    url("/fonts/ttf/IRANSansWeb_UltraLight.ttf") format("truetype");
+  font-weight: 200;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-  font-family: "Vazirmatn";
-  src: url("/fonts/Vazirmatn/Vazirmatn-Bold.woff") format("woff");
+  font-family: "IRANSans";
+  src:
+    url("/fonts/woff2/IRANSansWeb_Light.woff2") format("woff2"),
+    url("/fonts/woff/IRANSansWeb_Light.woff") format("woff"),
+    url("/fonts/ttf/IRANSansWeb_Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src:
+    url("/fonts/woff2/IRANSansWeb.woff2") format("woff2"),
+    url("/fonts/woff/IRANSansWeb.woff") format("woff"),
+    url("/fonts/ttf/IRANSansWeb.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src:
+    url("/fonts/woff2/IRANSansWeb_Medium.woff2") format("woff2"),
+    url("/fonts/woff/IRANSansWeb_Medium.woff") format("woff"),
+    url("/fonts/ttf/IRANSansWeb_Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSans";
+  src:
+    url("/fonts/woff2/IRANSansWeb_Bold.woff2") format("woff2"),
+    url("/fonts/woff/IRANSansWeb_Bold.woff") format("woff"),
+    url("/fonts/ttf/IRANSansWeb_Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @layer base {
@@ -74,27 +115,10 @@
   }
 }
 
-/* Import BYekan font (user preference) */
-@font-face {
-  font-family: "BYekan";
-  src: url("/fonts/BYekan/BYekan+.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "BYekan";
-  src: url("/fonts/BYekan/BYekan+ Bold.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Utility class to use BYekan where desired */
-.font-byekan {
+/* Utility class to use IRANSans where desired */
+.font-iransans {
   font-family:
-    "BYekan",
+    "IRANSans",
     system-ui,
     -apple-system,
     Segoe UI,
@@ -111,33 +135,81 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "BYekan", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    font-weight: 400;
+    font-family:
+      "IRANSans",
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif;
+    font-weight: 300;
     font-size: 14px;
     line-height: 1.5;
   }
-  
-  /* Reduce font weights globally */
-  h1, h2, h3, h4, h5, h6 {
+
+  /* Heading weights tuned for IRANSans */
+  h1 {
+    font-weight: 700;
+    color: #000000;
+  }
+  h2 {
     font-weight: 600;
     color: #000000;
   }
-  
-  /* Reduce font sizes */
-  h1 { font-size: 1.5rem; }
-  h2 { font-size: 1.25rem; }
-  h3 { font-size: 1.125rem; }
-  h4 { font-size: 1rem; }
-  h5 { font-size: 0.875rem; }
-  h6 { font-size: 0.75rem; }
-  
-  /* Make text less bold by default */
-  p, span, div, a, button, input, textarea, select {
-    font-weight: 400;
+  h3 {
+    font-weight: 500;
+    color: #000000;
   }
-  
+  h4 {
+    font-weight: 500;
+    color: #000000;
+  }
+  h5 {
+    font-weight: 400;
+    color: #000000;
+  }
+  h6 {
+    font-weight: 400;
+    color: #000000;
+  }
+
+  /* Reduce font sizes */
+  h1 {
+    font-size: 1.5rem;
+  }
+  h2 {
+    font-size: 1.25rem;
+  }
+  h3 {
+    font-size: 1.125rem;
+  }
+  h4 {
+    font-size: 1rem;
+  }
+  h5 {
+    font-size: 0.875rem;
+  }
+  h6 {
+    font-size: 0.75rem;
+  }
+
+  /* Make text less bold by default */
+  p,
+  span,
+  div,
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    font-weight: 300;
+  }
+
   /* Strong and bold elements */
-  strong, b {
+  strong,
+  b {
     font-weight: 600;
   }
 }
@@ -176,6 +248,29 @@
 }
 
 @layer utilities {
+  /* Alternating order cards: thicker border and subtle shadow */
+  .order-cards-alt > *:nth-child(odd) .card {
+    @apply bg-white border-2 border-gray-300 shadow-[0_2px_6px_rgba(0,0,0,0.06)];
+  }
+  .order-cards-alt > *:nth-child(even) .card {
+    @apply bg-gray-50 border-2 border-gray-300 shadow-[0_2px_6px_rgba(0,0,0,0.06)];
+  }
+
+  /* For cart page rows (which are plain divs), add alternating row backgrounds and borders */
+  .order-cards-alt > .order-item-row:nth-child(odd) {
+    @apply bg-white border-2 border-gray-200 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.06)];
+  }
+  .order-cards-alt > .order-item-row:nth-child(even) {
+    @apply bg-gray-50 border-2 border-gray-200 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.06)];
+  }
+
+  /* If cards are direct children (not wrapped) */
+  .order-cards-alt.card:nth-child(odd) {
+    @apply bg-white border-2 border-gray-300 shadow-[0_2px_6px_rgba(0,0,0,0.06)];
+  }
+  .order-cards-alt.card:nth-child(even) {
+    @apply bg-gray-50 border-2 border-gray-300 shadow-[0_2px_6px_rgba(0,0,0,0.06)];
+  }
   .highlight-link a,
   a.highlight-link {
     @apply text-sky-700 hover:text-orange-700;
@@ -193,24 +288,24 @@
   .flex-between {
     @apply flex justify-between items-center;
   }
-  
+
   /* Title styles with black color */
   .title-black {
     color: #000000;
     font-weight: 600;
   }
-  
+
   /* Reduced icon sizes */
   .icon-sm {
     width: 16px;
     height: 16px;
   }
-  
+
   .icon-md {
     width: 20px;
     height: 20px;
   }
-  
+
   .icon-lg {
     width: 24px;
     height: 24px;

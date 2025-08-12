@@ -37,7 +37,7 @@ export default async function AccountPage() {
     profile?.image || user?.image || unavatarFromEmail || gravatarAvatar || "";
 
   return (
-    <div className={`font-byekan ${styles.container}`} dir="rtl">
+    <div className={`font-iransans ${styles.container}`} dir="rtl">
       <h1 className={styles.title}>حساب کاربری شما</h1>
 
       <div className={styles.card}>

@@ -32,7 +32,7 @@ export default function WhyMaltina() {
         <div className="px-4 sm:px-8 py-6">
           <h3
             className="text-center text-lg sm:text-xl font-bold text-green-700 mb-6"
-            style={{ fontFamily: "BYekan, sans-serif" }}
+            style={{ fontFamily: "IRANSans, sans-serif" }}
           >
             چرا از جی استایل خرید کنیم؟
           </h3>
@@ -45,7 +45,7 @@ export default function WhyMaltina() {
                 </div>
                 <div
                   className="text-sm sm:text-base text-green-700 leading-6"
-                  style={{ fontFamily: "BYekan, sans-serif" }}
+                  style={{ fontFamily: "IRANSans, sans-serif" }}
                 >
                   {item.title}
                 </div>

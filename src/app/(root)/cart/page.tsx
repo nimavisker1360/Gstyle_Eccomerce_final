@@ -72,7 +72,7 @@ export default function CartPage() {
                     اقلام انتخاب‌شده شما در زیر نمایش داده می‌شود
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-4">
+                <CardContent className="p-4 order-cards-alt">
                   <div className="flex justify-end border-b border-green-200 mb-4 text-green-700">
                     قیمت
                   </div>
@@ -80,7 +80,7 @@ export default function CartPage() {
                   {items.map((item) => (
                     <div
                       key={item.clientId}
-                      className="flex flex-col md:flex-row justify-between py-4 border-b border-blue-100 gap-4"
+                      className="order-item-row flex flex-col md:flex-row justify-between py-4 gap-4"
                     >
                       <Link href={`/product/${item.slug}`}>
                         <div className="relative w-40 h-40">

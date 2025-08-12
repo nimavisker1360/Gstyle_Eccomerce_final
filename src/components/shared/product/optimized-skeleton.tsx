@@ -12,7 +12,7 @@ export default function OptimizedSkeleton({
   subtitle = "لطفا صبر کنید",
 }: OptimizedSkeletonProps) {
   return (
-    <div className="w-full" style={{ fontFamily: "BYekan, sans-serif" }}>
+    <div className="w-full" style={{ fontFamily: "IRANSans, sans-serif" }}>
       {/* Compact Loading Header */}
       <div className="flex items-center justify-center py-6 mb-6">
         <div className="flex items-center space-x-3 rtl:space-x-reverse">

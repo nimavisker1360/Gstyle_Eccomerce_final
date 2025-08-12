@@ -39,7 +39,7 @@ export default function TestGoogleShoppingPage() {
     <div className="container mx-auto px-4 py-8">
       <h1
         className="text-2xl font-bold mb-6"
-        style={{ fontFamily: "BYekan, sans-serif" }}
+        style={{ fontFamily: "IRANSans, sans-serif" }}
       >
         تست API گوگل شاپینگ
       </h1>

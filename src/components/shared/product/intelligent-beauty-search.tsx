@@ -313,7 +313,7 @@ export default function IntelligentBeautySearch({
               </p>
               {telegramSupport && (
                 <Button
-                  variant="outline"
+                  className="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
                   onClick={() =>
                     window.open(`https://t.me/${telegramSupport}`, "_blank")
                   }
