@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +13,16 @@ interface MobileNumberInputProps {
   userId: string;
   currentMobile: string;
   onUpdate?: (mobile: string) => void;
+  exposeApiRef?: React.MutableRefObject<{
+    save: () => Promise<boolean>;
+  } | null>;
 }
 
 export default function MobileNumberInput({
   userId,
   currentMobile,
   onUpdate,
+  exposeApiRef,
 }: MobileNumberInputProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -87,6 +92,19 @@ export default function MobileNumberInput({
       setIsLoading(false);
     }
   };
+
+  // Allow a global confirm action to trigger save (used by account confirm button)
+  useEffect(() => {
+    const handler = async () => {
+      if (isEditing) {
+        await handleSave();
+      }
+    };
+    window.addEventListener("account-confirm", handler as EventListener);
+    return () => {
+      window.removeEventListener("account-confirm", handler as EventListener);
+    };
+  }, [isEditing, mobile]);
 
   const handleCancel = () => {
     setMobile(currentMobile);

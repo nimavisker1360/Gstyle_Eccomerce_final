@@ -14,6 +14,8 @@ type Props = {
   fileInputLabelClass: string;
   filePlaceholderClass: string;
   submitButtonClass: string;
+  formId?: string;
+  hideSubmitButton?: boolean;
 };
 
 export default function AvatarUploadForm(props: Props) {
@@ -26,6 +28,8 @@ export default function AvatarUploadForm(props: Props) {
     fileInputLabelClass,
     filePlaceholderClass,
     submitButtonClass,
+    formId,
+    hideSubmitButton,
   } = props;
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -46,6 +50,7 @@ export default function AvatarUploadForm(props: Props) {
   return (
     <>
       <form
+        id={formId}
         ref={formRef}
         action={updateUserAvatar}
         className={formClass}
@@ -67,9 +72,11 @@ export default function AvatarUploadForm(props: Props) {
           </label>
           <div className={filePlaceholderClass}>فایلی انتخاب نشده</div>
         </div>
-        <button type="submit" className={submitButtonClass}>
-          ذخیره آواتار
-        </button>
+        {!hideSubmitButton && (
+          <button type="submit" className={submitButtonClass}>
+            ذخیره آواتار
+          </button>
+        )}
       </form>
     </>
   );

@@ -44,9 +44,6 @@ export default async function UserButton() {
               <Link className="w-full" href="/account">
                 <DropdownMenuItem>حساب کاربری شما</DropdownMenuItem>
               </Link>
-              <Link className="w-full" href="/account/orders">
-                <DropdownMenuItem>سفارشات شما</DropdownMenuItem>
-              </Link>
 
               {session.user.role === "Admin" && (
                 <Link className="w-full" href="/admin/overview">

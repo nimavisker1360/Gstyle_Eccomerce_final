@@ -32,7 +32,7 @@ export default async function SuccessPage(props: {
             </h1>
             <div>We are now processing your order.</div>
             <Button asChild>
-              <Link href={`/account/orders/${id}`}>View order</Link>
+              <Link href={`/account`}>Go to account</Link>
             </Button>
           </div>
         </div>
@@ -55,7 +55,7 @@ export default async function SuccessPage(props: {
           </h1>
           <div>We are now processing your order.</div>
           <Button asChild>
-            <Link href={`/account/orders/${id}`}>View order</Link>
+            <Link href={`/account`}>Go to account</Link>
           </Button>
         </div>
       </div>

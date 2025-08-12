@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { User, ClipboardList, LogOut, RefreshCw } from "lucide-react";
+import { User, LogOut, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import useCartStore from "@/hooks/use-cart-store";
 import { useState } from "react";
@@ -101,12 +101,6 @@ export default function UserButtonClient() {
                 <DropdownMenuItem className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 cursor-pointer">
                   <span>حساب کاربری شما</span>
                   <User className="w-3 h-3 text-green-600" />
-                </DropdownMenuItem>
-              </Link>
-              <Link className="w-full" href="/account/orders">
-                <DropdownMenuItem className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 cursor-pointer">
-                  <span>سفارشات شما</span>
-                  <ClipboardList className="w-3 h-3 text-green-600" />
                 </DropdownMenuItem>
               </Link>
 

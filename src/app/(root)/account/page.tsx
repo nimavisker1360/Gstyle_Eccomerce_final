@@ -1,10 +1,10 @@
 import { auth } from "@/auth";
-import Image from "next/image";
 import { getUserProfile } from "@/lib/actions/user.actions";
 import styles from "./account.module.css";
 import MobileNumberInput from "@/components/shared/mobile-number-input";
 import AvatarPreview from "@/components/shared/avatar-preview";
 import AvatarUploadForm from "@/components/shared/avatar-upload-form";
+import AccountConfirmButton from "@/components/shared/account-confirm-button";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +68,8 @@ export default async function AccountPage() {
             fileInputLabelClass={styles.fileInputLabel}
             filePlaceholderClass={styles.filePlaceholder}
             submitButtonClass={styles.submitButton}
+            formId="avatar-upload-form"
+            hideSubmitButton
           />
         )}
 
@@ -101,6 +103,7 @@ export default async function AccountPage() {
             )}
           </div>
         </form>
+        <AccountConfirmButton userId={user?.id ?? null} />
       </div>
     </div>
   );

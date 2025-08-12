@@ -45,7 +45,7 @@ export default function OrderPaymentForm({
   const { toast } = useToast();
 
   if (isPaid) {
-    redirect(`/account/orders/${order._id}`);
+    redirect(`/account`);
   }
   function PrintLoadingState() {
     const [{ isPending, isRejected }] = usePayPalScriptReducer();
@@ -134,9 +134,9 @@ export default function OrderPaymentForm({
             {!isPaid && paymentMethod === "Cash On Delivery" && (
               <Button
                 className="w-full rounded-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => router.push(`/account/orders/${order._id}`)}
+                onClick={() => router.push(`/account`)}
               >
-                View Order
+                Go to account
               </Button>
             )}
           </div>
