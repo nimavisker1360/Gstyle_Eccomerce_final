@@ -133,16 +133,16 @@ export default function CredentialsSignInForm() {
             name="mobile"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel className="text-right w-full">
+                {/* <FormLabel className="text-right w-full">
                   شماره موبایل (اختیاری)
-                </FormLabel>
+                </FormLabel> */}
                 <FormControl>
-                  <Input
+                  {/* <Input
                     className="text-right"
                     type="tel"
                     {...field}
                     placeholder="شماره موبایل را وارد کنید "
-                  />
+                  /> */}
                 </FormControl>
                 <FormMessage />
               </FormItem>

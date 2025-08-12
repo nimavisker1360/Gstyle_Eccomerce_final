@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { convertTRYToToman, formatToman } from "@/lib/utils";
 
 // Email HTML generator utility
 function generateEmailHTML(payload: EmailPayload): string {
@@ -13,23 +14,34 @@ function generateEmailHTML(payload: EmailPayload): string {
   } = payload;
 
   const itemsHTML = items
-    .map(
-      (item) => `
+    .map((item) => {
+      const lineTotalToman = convertTRYToToman(item.price * item.quantity);
+      const unitToman = convertTRYToToman(item.price);
+      return `
     <tr style="border-bottom: 1px solid #f1f5f9;">
       <td style="padding: 12px; text-align: right;">
-        ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover;">` : "بدون تصویر"}
+        ${
+          item.image
+            ? `<img src="${item.image}" alt="${item.name}" style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover;">`
+            : "بدون تصویر"
+        }
       </td>
       <td style="padding: 12px; text-align: right;">
         <strong>${item.name}</strong><br>
-        ${item.color ? `رنگ: ${item.color}` : ""} ${item.size ? `| سایز: ${item.size}` : ""}<br>
+        ${item.color ? `رنگ: ${item.color}` : ""} ${
+          item.size ? `| سایز: ${item.size}` : ""
+        }<br>
         تعداد: ${item.quantity}
       </td>
       <td style="padding: 12px; text-align: left;">
-        ${(item.price * item.quantity).toLocaleString("fa-IR")} تومان
+        ${formatToman(lineTotalToman)}<br>
+        <span style="color:#64748b; font-size:12px;">(${formatToman(
+          unitToman
+        )} × ${item.quantity})</span>
       </td>
     </tr>
-  `
-    )
+  `;
+    })
     .join("");
 
   return `
@@ -74,14 +86,14 @@ function generateEmailHTML(payload: EmailPayload): string {
         <div style="margin-top: 20px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
             <span>مجموع محصولات:</span>
-            <span>${itemsPrice.toLocaleString("fa-IR")} تومان</span>
+            <span>${formatToman(convertTRYToToman(itemsPrice))}</span>
           </div>
           ${
             taxPrice !== undefined
               ? `
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
               <span>مالیات:</span>
-              <span>${taxPrice.toLocaleString("fa-IR")} تومان</span>
+              <span>${formatToman(convertTRYToToman(taxPrice))}</span>
             </div>
           `
               : ""
@@ -91,14 +103,18 @@ function generateEmailHTML(payload: EmailPayload): string {
               ? `
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
               <span>هزینه ارسال:</span>
-              <span>${shippingPrice === 0 ? "رایگان" : shippingPrice.toLocaleString("fa-IR") + " تومان"}</span>
+              <span>${
+                shippingPrice === 0
+                  ? "رایگان"
+                  : formatToman(convertTRYToToman(shippingPrice))
+              }</span>
             </div>
           `
               : ""
           }
           <div style="display: flex; justify-content: space-between; margin-top: 12px; padding: 12px; background-color: #059669; color: white; border-radius: 8px;">
             <strong>جمع کل سفارش:</strong>
-            <strong>${totalPrice.toLocaleString("fa-IR")} تومان</strong>
+            <strong>${formatToman(convertTRYToToman(totalPrice))}</strong>
           </div>
         </div>
 

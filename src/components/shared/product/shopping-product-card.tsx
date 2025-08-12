@@ -13,6 +13,7 @@ import {
 import useCartStore from "@/hooks/use-cart-store";
 import { convertTRYToToman, formatToman } from "@/lib/utils";
 import { OrderItem } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface ShoppingProduct {
   id: string;
@@ -44,6 +45,7 @@ export default function ShoppingProductCard({
   isSearchResult = false,
 }: ShoppingProductCardProps) {
   const { addItem } = useCartStore();
+  const { toast } = useToast();
 
   const handleAddToCart = async () => {
     try {
@@ -62,9 +64,10 @@ export default function ShoppingProductCard({
       };
 
       await addItem(orderItem, 1);
-
-      // Optional: Show a success message or toast
-      console.log("محصول با موفقیت به سبد خرید اضافه شد:", product.title);
+      toast({
+        variant: "success",
+        description: "به سبد خرید اضافه شد",
+      });
     } catch (error) {
       console.error("خطا در اضافه کردن به سبد خرید:", error);
       // Optional: Show error message to user

@@ -13,7 +13,7 @@ import {
   Text,
 } from "@react-email/components";
 
-import { formatCurrency } from "@/lib/utils";
+import { convertTRYToToman, formatToman } from "@/lib/utils";
 import { IOrder } from "@/lib/db/models/order.model";
 import { SERVER_URL } from "@/lib/constants";
 
@@ -63,15 +63,15 @@ PurchaseReceiptEmail.PreviewProps = {
 } satisfies OrderInformationProps;
 const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 
-// Helper function to safely format currency
-const safeFormatCurrency = (amount: number | undefined | null): string => {
+// Helper function to safely convert TRY → Toman and format in fa-IR
+const safeFormatToman = (amount: number | undefined | null): string => {
   try {
     if (amount === null || amount === undefined || isNaN(amount)) {
-      return "$0.00";
+      return formatToman(0);
     }
-    return formatCurrency(amount);
+    return formatToman(convertTRYToToman(amount));
   } catch {
-    return "$0.00";
+    return formatToman(0);
   }
 };
 
@@ -135,7 +135,7 @@ export default function PurchaseReceiptEmail({ order }: OrderInformationProps) {
                       Price Paid
                     </Text>
                     <Text className="mt-0 mr-4">
-                      {safeFormatCurrency(totalPrice)}
+                      {safeFormatToman(totalPrice)}
                     </Text>
                   </Column>
                 </Row>
@@ -170,7 +170,7 @@ export default function PurchaseReceiptEmail({ order }: OrderInformationProps) {
                       </Column>
                       <Column align="right" className="align-top">
                         <Text className="m-0 ">
-                          {safeFormatCurrency(itemPrice)}
+                          {safeFormatToman(itemPrice)}
                         </Text>
                       </Column>
                     </Row>
@@ -185,7 +185,7 @@ export default function PurchaseReceiptEmail({ order }: OrderInformationProps) {
                   <Row key={name} className="py-1">
                     <Column align="right">{name}:</Column>
                     <Column align="right" width={70} className="align-top">
-                      <Text className="m-0">{safeFormatCurrency(price)}</Text>
+                      <Text className="m-0">{safeFormatToman(price)}</Text>
                     </Column>
                   </Row>
                 ))}

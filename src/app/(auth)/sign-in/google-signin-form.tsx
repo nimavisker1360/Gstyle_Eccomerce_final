@@ -10,7 +10,7 @@ export function GoogleSignInForm() {
     return (
       <Button
         disabled={pending}
-        className="w-full flex items-center justify-center gap-2 text-sky-700 border-sky-300"
+        className="w-full flex items-center justify-center gap-2 text-white border-sky-300 bg-blue-600"
         variant="outline"
       >
         {!pending && (

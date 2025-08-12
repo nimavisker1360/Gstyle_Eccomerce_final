@@ -12,7 +12,7 @@ import {
   Tailwind,
   Text,
 } from "@react-email/components";
-import { convertTRYToRial, formatRial, formatDateTime } from "@/lib/utils";
+import { convertTRYToToman, formatToman, formatDateTime } from "@/lib/utils";
 
 type SupportCheckoutEmailProps = {
   payload: {
@@ -37,15 +37,15 @@ type SupportCheckoutEmailProps = {
   };
 };
 
-const safeRial = (tryAmount?: number | null) => {
+const safeToman = (tryAmount?: number | null) => {
   if (
     tryAmount === undefined ||
     tryAmount === null ||
     Number.isNaN(tryAmount)
   ) {
-    return formatRial(0);
+    return formatToman(0);
   }
-  return formatRial(convertTRYToRial(tryAmount));
+  return formatToman(convertTRYToToman(tryAmount));
 };
 
 export default function SupportCheckoutEmail({
@@ -259,7 +259,7 @@ export default function SupportCheckoutEmail({
                       color: "#059669",
                     }}
                   >
-                    {safeRial(item.price * item.quantity)}
+                    {safeToman(item.price * item.quantity)}
                   </Text>
                   <Text
                     style={{
@@ -268,7 +268,7 @@ export default function SupportCheckoutEmail({
                       color: "#64748b",
                     }}
                   >
-                    ({safeRial(item.price)} × {item.quantity})
+                    ({safeToman(item.price)} × {item.quantity})
                   </Text>
                 </Column>
               </Row>
@@ -310,7 +310,7 @@ export default function SupportCheckoutEmail({
                         ? "--"
                         : price === 0 && name === "هزینه ارسال"
                           ? "رایگان"
-                          : safeRial(price ?? 0)}
+                          : safeToman(price ?? 0)}
                     </Text>
                   </Column>
                 </Row>
@@ -345,7 +345,7 @@ export default function SupportCheckoutEmail({
                       color: "#ffffff",
                     }}
                   >
-                    {safeRial(totalPrice)}
+                    {safeToman(totalPrice)}
                   </Text>
                 </Column>
               </Row>
