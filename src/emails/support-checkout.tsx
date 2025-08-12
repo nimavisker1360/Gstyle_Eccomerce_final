@@ -64,84 +64,317 @@ export default function SupportCheckoutEmail({
 
   return (
     <Html>
-      <Preview>Checkout details sent by customer</Preview>
-      <Tailwind>
-        <Head />
-        <Body className="font-sans bg-white">
-          <Container className="max-w-xl">
-            <Heading>Checkout Support Request</Heading>
+      <Preview>درخواست پشتیبانی سبد خرید مشتری</Preview>
+      <Head>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap');
+          * {
+            font-family: 'Vazirmatn', sans-serif !important;
+          }
+        `}</style>
+      </Head>
+      <Body
+        style={{
+          fontFamily: "'Vazirmatn', sans-serif",
+          backgroundColor: "#ffffff",
+          direction: "rtl",
+          textAlign: "right",
+        }}
+      >
+        <Container
+          style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}
+        >
+          <Heading
+            style={{
+              color: "#2563eb",
+              textAlign: "center",
+              fontSize: "24px",
+              marginBottom: "20px",
+            }}
+          >
+            درخواست پشتیبانی سبد خرید
+          </Heading>
 
-            <Section className="mb-4">
-              <Text className="m-0">
-                Payment method: {paymentMethod || "-"}
+          <Section
+            style={{
+              marginBottom: "16px",
+              padding: "16px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "8px",
+            }}
+          >
+            <Text style={{ margin: "0", fontSize: "14px", color: "#475569" }}>
+              <strong>روش پرداخت:</strong> {paymentMethod || "انتخاب نشده"}
+            </Text>
+            {expectedDeliveryDate ? (
+              <Text
+                style={{
+                  margin: "8px 0 0 0",
+                  fontSize: "14px",
+                  color: "#475569",
+                }}
+              >
+                <strong>تاریخ تحویل مورد انتظار:</strong>{" "}
+                {formatDateTime(new Date(expectedDeliveryDate as any)).dateOnly}
               </Text>
-              {expectedDeliveryDate ? (
-                <Text className="m-0">
-                  Expected delivery:{" "}
-                  {
-                    formatDateTime(new Date(expectedDeliveryDate as any))
-                      .dateOnly
-                  }
-                </Text>
-              ) : null}
-            </Section>
-
-            {shippingAddress ? (
-              <Section className="border border-solid border-gray-300 rounded-md p-3 mb-4">
-                <Text className="font-semibold">Shipping address</Text>
-                <Text className="m-0">
-                  Name: {shippingAddress.fullName || "-"}
-                </Text>
-                <Text className="m-0">
-                  Phone: {shippingAddress.phone || "-"}
-                </Text>
-              </Section>
             ) : null}
+          </Section>
 
-            <Section className="border border-solid border-gray-300 rounded-md p-3 mb-4">
-              {items.map((item, i) => (
-                <Row key={`${item.name}-${i}`} className="py-2">
-                  <Column className="w-16">
-                    {item?.image ? (
-                      <Img
-                        width="48"
-                        height="48"
-                        alt={item.name}
-                        className="rounded"
-                        src={item.image}
-                      />
-                    ) : null}
-                  </Column>
-                  <Column>
-                    <Text className="m-0">
-                      {item.name}
-                      {item.color ? `, ${item.color}` : ""}
-                      {item.size ? `, ${item.size}` : ""} x {item.quantity}
+          {shippingAddress ? (
+            <Section
+              style={{
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "16px",
+              }}
+            >
+              <Text
+                style={{
+                  fontWeight: "600",
+                  fontSize: "16px",
+                  color: "#1e293b",
+                  margin: "0 0 8px 0",
+                }}
+              >
+                اطلاعات تماس مشتری
+              </Text>
+              <Text style={{ margin: "0", fontSize: "14px", color: "#475569" }}>
+                <strong>نام:</strong> {shippingAddress.fullName || "وارد نشده"}
+              </Text>
+              <Text
+                style={{
+                  margin: "4px 0 0 0",
+                  fontSize: "14px",
+                  color: "#475569",
+                }}
+              >
+                <strong>تلفن:</strong> {shippingAddress.phone || "وارد نشده"}
+              </Text>
+            </Section>
+          ) : null}
+
+          <Section
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+              padding: "16px",
+              marginBottom: "16px",
+            }}
+          >
+            <Text
+              style={{
+                fontWeight: "600",
+                fontSize: "16px",
+                color: "#1e293b",
+                margin: "0 0 16px 0",
+              }}
+            >
+              آیتم‌های سبد خرید
+            </Text>
+
+            {items.map((item, i) => (
+              <Row
+                key={`${item.name}-${i}`}
+                style={{
+                  borderBottom:
+                    i < items.length - 1 ? "1px solid #f1f5f9" : "none",
+                  paddingBottom: "12px",
+                  marginBottom: "12px",
+                }}
+              >
+                <Column style={{ width: "80px", verticalAlign: "top" }}>
+                  {item?.image ? (
+                    <Img
+                      width="64"
+                      height="64"
+                      alt={item.name}
+                      style={{ borderRadius: "8px", objectFit: "cover" }}
+                      src={item.image}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "64px",
+                        height: "64px",
+                        backgroundColor: "#f1f5f9",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "12px",
+                        color: "#64748b",
+                      }}
+                    >
+                      بدون تصویر
+                    </div>
+                  )}
+                </Column>
+                <Column style={{ paddingLeft: "12px", verticalAlign: "top" }}>
+                  <Text
+                    style={{
+                      margin: "0",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#1e293b",
+                    }}
+                  >
+                    {item.name}
+                  </Text>
+                  {(item.color || item.size) && (
+                    <Text
+                      style={{
+                        margin: "4px 0 0 0",
+                        fontSize: "12px",
+                        color: "#64748b",
+                      }}
+                    >
+                      {item.color ? `رنگ: ${item.color}` : ""}
+                      {item.color && item.size ? " | " : ""}
+                      {item.size ? `سایز: ${item.size}` : ""}
+                    </Text>
+                  )}
+                  <Text
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    تعداد: {item.quantity}
+                  </Text>
+                </Column>
+                <Column
+                  style={{
+                    textAlign: "left",
+                    verticalAlign: "top",
+                    width: "100px",
+                  }}
+                >
+                  <Text
+                    style={{
+                      margin: "0",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#059669",
+                    }}
+                  >
+                    {safeRial(item.price * item.quantity)}
+                  </Text>
+                  <Text
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    ({safeRial(item.price)} × {item.quantity})
+                  </Text>
+                </Column>
+              </Row>
+            ))}
+
+            <div
+              style={{
+                borderTop: "2px solid #e2e8f0",
+                marginTop: "16px",
+                paddingTop: "16px",
+              }}
+            >
+              {[
+                { name: "مجموع محصولات", price: itemsPrice },
+                { name: "مالیات", price: taxPrice },
+                { name: "هزینه ارسال", price: shippingPrice },
+              ].map(({ name, price }) => (
+                <Row key={name} style={{ marginBottom: "8px" }}>
+                  <Column style={{ textAlign: "right" }}>
+                    <Text
+                      style={{
+                        margin: "0",
+                        fontSize: "14px",
+                        color: "#475569",
+                      }}
+                    >
+                      {name}:
                     </Text>
                   </Column>
-                  <Column align="right">
-                    <Text className="m-0">{safeRial(item.price)}</Text>
+                  <Column style={{ textAlign: "left", width: "120px" }}>
+                    <Text
+                      style={{
+                        margin: "0",
+                        fontSize: "14px",
+                        color: "#475569",
+                      }}
+                    >
+                      {price === undefined
+                        ? "--"
+                        : price === 0 && name === "هزینه ارسال"
+                          ? "رایگان"
+                          : safeRial(price ?? 0)}
+                    </Text>
                   </Column>
                 </Row>
               ))}
 
-              {[
-                { name: "Items", price: itemsPrice },
-                { name: "Tax", price: taxPrice },
-                { name: "Shipping", price: shippingPrice },
-                { name: "Total", price: totalPrice },
-              ].map(({ name, price }) => (
-                <Row key={name} className="py-1">
-                  <Column align="right">{name}:</Column>
-                  <Column align="right" width={140} className="align-top">
-                    <Text className="m-0">{safeRial(price ?? 0)}</Text>
-                  </Column>
-                </Row>
-              ))}
-            </Section>
-          </Container>
-        </Body>
-      </Tailwind>
+              <Row
+                style={{
+                  backgroundColor: "#059669",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  marginTop: "12px",
+                }}
+              >
+                <Column style={{ textAlign: "right" }}>
+                  <Text
+                    style={{
+                      margin: "0",
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      color: "#ffffff",
+                    }}
+                  >
+                    جمع کل سفارش:
+                  </Text>
+                </Column>
+                <Column style={{ textAlign: "left", width: "120px" }}>
+                  <Text
+                    style={{
+                      margin: "0",
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {safeRial(totalPrice)}
+                  </Text>
+                </Column>
+              </Row>
+            </div>
+          </Section>
+
+          <Section
+            style={{
+              backgroundColor: "#fef3c7",
+              border: "1px solid #f59e0b",
+              borderRadius: "8px",
+              padding: "16px",
+              marginTop: "20px",
+            }}
+          >
+            <Text
+              style={{
+                margin: "0",
+                fontSize: "14px",
+                color: "#92400e",
+                textAlign: "center",
+              }}
+            >
+              <strong>توجه:</strong> این درخواست پشتیبانی از طرف مشتری ارسال شده
+              است و نیاز به پیگیری دارد.
+            </Text>
+          </Section>
+        </Container>
+      </Body>
     </Html>
   );
 }
