@@ -1,4 +1,4 @@
-import { Plane, RotateCcw, Truck, ShieldCheck } from "lucide-react";
+import { CreditCard, RotateCcw, Truck, ShieldCheck } from "lucide-react";
 
 interface FeatureItem {
   icon: React.ReactNode;
@@ -9,8 +9,8 @@ interface FeatureItem {
 export default function WhyMaltina() {
   const features: FeatureItem[] = [
     {
-      icon: <Plane className="w-7 h-7 text-white" />,
-      title: "ارسال اکسپرس به ایران",
+      icon: <CreditCard className="w-7 h-7 text-white" />,
+      title: "دارای درگاه پرداخت زرین پال",
     },
     {
       icon: <RotateCcw className="w-7 h-7 text-white" />,
