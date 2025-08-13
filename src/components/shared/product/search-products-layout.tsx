@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2, ChevronRight, Plus, SearchX } from "lucide-react";
@@ -580,6 +580,18 @@ export default function SearchProductsLayout({
     handleSearch(searchQuery);
   };
 
+  // Debounce live search input changes (500ms)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const onChangeDebounced = (value: string) => {
+    setSearchQuery(value);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      if (value.trim()) {
+        handleSearch(value);
+      }
+    }, 500);
+  };
+
   // جستجوی اولیه - فقط اگر query وجود داشته باشد
   useEffect(() => {
     if (initialQuery && initialQuery.trim()) {
@@ -659,7 +671,7 @@ export default function SearchProductsLayout({
             type="text"
             placeholder="جستجوی محصولات از ترکیه..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => onChangeDebounced(e.target.value)}
             className="flex-1"
             dir="rtl"
           />

@@ -3,6 +3,7 @@ import { getJson } from "serpapi";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { connectToDatabase } from "@/lib/db";
+import { redis, getRedisKeyForQuery, ONE_DAY_SECONDS } from "@/lib/redis";
 import { getTurkishKeywordsForPersianQuery } from "@/lib/tr-fa-mapping";
 import GoogleShoppingProduct from "@/lib/db/models/google-shopping-product.model";
 
@@ -366,6 +367,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
+    const force =
+      searchParams.get("force") === "1" || searchParams.get("force") === "true";
 
     if (!query) {
       return NextResponse.json(
@@ -374,7 +377,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check database cache first - use the exact query for cache key
+    // Redis cache first (24h)
+    const redisKey = getRedisKeyForQuery(query);
+    if (!force) {
+      try {
+        const cached = await redis.get(redisKey);
+        if (cached) {
+          const parsed =
+            typeof cached === "string" ? JSON.parse(cached) : cached;
+          return NextResponse.json({
+            ...parsed,
+            cached: true,
+            from_redis: true,
+          });
+        }
+      } catch (e) {
+        console.error("❌ Redis get failed:", e);
+      }
+    }
+
+    // Check database cache next - use the exact query for cache key
     let queryType = getQueryType(query.toLowerCase());
     let hasCachedProducts = false;
 
@@ -392,7 +414,7 @@ export async function GET(request: NextRequest) {
       // Continue without cache if database fails
     }
 
-    if (hasCachedProducts) {
+    if (hasCachedProducts && !force) {
       try {
         console.log(
           `✅ Returning cached products from database for cache key: "${cacheKey}"`
@@ -413,7 +435,7 @@ export async function GET(request: NextRequest) {
           createdAt: p.createdAt,
         }));
 
-        return NextResponse.json({
+        const dbResponse = {
           products: formattedProducts,
           total: formattedProducts.length,
           search_query: query,
@@ -422,7 +444,18 @@ export async function GET(request: NextRequest) {
             "\u202Aبرای سفارش محصول روی + کلیک کنید تا محصول به سبد خرید انتقال داده بشه\u202C",
           cached: true,
           from_database: true,
-        });
+        };
+
+        try {
+          // backfill Redis for faster subsequent reads
+          await redis.set(redisKey, JSON.stringify(dbResponse), {
+            ex: ONE_DAY_SECONDS,
+          });
+        } catch (e) {
+          console.error("❌ Redis set backfill failed:", e);
+        }
+
+        return NextResponse.json(dbResponse);
       } catch (cacheError) {
         console.error("❌ Failed to retrieve cached products:", cacheError);
         // Continue with fresh search if cache retrieval fails
@@ -457,7 +490,7 @@ export async function GET(request: NextRequest) {
             createdAt: p.createdAt,
           }));
 
-          return NextResponse.json({
+          const dbOnlyResponse = {
             products: formattedProducts,
             total: formattedProducts.length,
             search_query: query,
@@ -467,7 +500,15 @@ export async function GET(request: NextRequest) {
             cached: true,
             from_database: true,
             api_configured: false,
-          });
+          };
+
+          try {
+            await redis.set(redisKey, JSON.stringify(dbOnlyResponse), {
+              ex: ONE_DAY_SECONDS,
+            });
+          } catch {}
+
+          return NextResponse.json(dbOnlyResponse);
         }
       } catch (dbError) {
         console.error("❌ Database connection failed:", dbError);
@@ -1327,6 +1368,15 @@ export async function GET(request: NextRequest) {
       message: message,
       cached: false,
     };
+
+    // Save fresh response to Redis for 24h and ensure Mongo already saved during processing
+    try {
+      await redis.set(redisKey, JSON.stringify(responseData), {
+        ex: ONE_DAY_SECONDS,
+      });
+    } catch (e) {
+      console.error("❌ Redis set failed:", e);
+    }
 
     return NextResponse.json(responseData);
   } catch (error) {
