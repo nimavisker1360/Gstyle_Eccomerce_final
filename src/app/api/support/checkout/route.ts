@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
 
     // Basic shape normalization (keep it permissive & robust)
     const payload = {
+      // keep any per-item note fields from client; sanitize types only
       items: Array.isArray(body?.items) ? body.items : [],
       itemsPrice: Number(body?.itemsPrice) || 0,
       shippingPrice:

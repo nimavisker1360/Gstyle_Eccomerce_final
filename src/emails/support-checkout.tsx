@@ -23,6 +23,7 @@ type SupportCheckoutEmailProps = {
       price: number;
       color?: string;
       size?: string;
+      note?: string;
     }>;
     itemsPrice: number;
     shippingPrice?: number;
@@ -243,6 +244,22 @@ export default function SupportCheckoutEmail({
                   >
                     تعداد: {item.quantity}
                   </Text>
+                  {item.note ? (
+                    <Text
+                      style={{
+                        margin: "8px 0 0 0",
+                        fontSize: "12px",
+                        color: "#1e293b",
+                        backgroundColor: "#fff7ed",
+                        border: "1px solid #fdba74",
+                        borderRadius: "6px",
+                        padding: "8px",
+                      }}
+                    >
+                      <strong>یادداشت مشتری:</strong>{" "}
+                      {String(item.note).slice(0, 800)}
+                    </Text>
+                  ) : null}
                 </Column>
                 <Column
                   style={{

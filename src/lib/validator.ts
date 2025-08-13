@@ -102,6 +102,8 @@ export const OrderItemSchema = z.object({
   price: Price("Price"),
   size: z.string().optional(),
   color: z.string().optional(),
+  // Optional customer note/question for support
+  note: z.string().max(800).optional(),
 });
 export const OrderInputSchema = z.object({
   user: z.union([

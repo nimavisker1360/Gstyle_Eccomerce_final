@@ -19,9 +19,11 @@ interface CartState {
   cart: Cart;
   addItem: (item: OrderItem, quantity: number) => Promise<string>;
   updateItem: (item: OrderItem, quantity: number) => void;
+  updateItemNote: (clientItemId: string, note: string) => void;
   removeItem: (item: OrderItem) => void;
   clearCart: () => void;
   replaceCart: (cart: Cart) => void;
+  saveCart: () => Promise<void>;
 
   setShippingAddress: (shippingAddress: ShippingAddress) => void;
   setPaymentMethod: (paymentMethod: string) => void;
@@ -129,6 +131,23 @@ const useCartStore = create(
         });
         persistCartToServer(get().cart);
       },
+      updateItemNote: (clientItemId: string, note: string) => {
+        const { items, shippingAddress } = get().cart;
+        const updatedCartItems = items.map((x) =>
+          x.clientId === clientItemId ? { ...x, note } : x
+        );
+        set({
+          cart: {
+            ...get().cart,
+            items: updatedCartItems,
+            ...calcDeliveryDateAndPrice({
+              items: updatedCartItems,
+              shippingAddress,
+            }),
+          },
+        });
+        persistCartToServer(get().cart);
+      },
       removeItem: (item: OrderItem) => {
         const { items, shippingAddress } = get().cart;
         const updatedCartItems = items.filter(
@@ -197,6 +216,17 @@ const useCartStore = create(
         set({
           cart,
         });
+      },
+      saveCart: async () => {
+        try {
+          const cart = get().cart;
+          if (!cart.items || cart.items.length === 0) return;
+          await fetch("/api/cart", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cart),
+          });
+        } catch {}
       },
       init: () => set({ cart: initialState }),
     }),

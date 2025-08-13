@@ -9,6 +9,7 @@ export interface ICartItem {
   quantity: number;
   color?: string;
   size?: string;
+  note?: string;
   product: string; // product id
   countInStock: number;
 }
@@ -44,6 +45,7 @@ const CartItemSchema = new Schema<ICartItem>(
     quantity: { type: Number, required: true },
     color: { type: String },
     size: { type: String },
+    note: { type: String },
     product: { type: String, required: true },
     countInStock: { type: Number, required: true },
   },

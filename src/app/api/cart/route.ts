@@ -41,6 +41,7 @@ export async function PUT(req: NextRequest) {
 
     const payload = {
       user: session.user.id,
+      // include any optional per-item fields like note
       items: body.items,
       itemsPrice: recomputed.itemsPrice,
       taxPrice: recomputed.taxPrice,

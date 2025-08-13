@@ -32,6 +32,13 @@ function generateEmailHTML(payload: EmailPayload): string {
           item.size ? `| سایز: ${item.size}` : ""
         }<br>
         تعداد: ${item.quantity}
+        ${
+          (item as any).note
+            ? `<div style="margin-top:6px;color:#1e293b;font-size:12px;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;padding:8px"><strong>یادداشت مشتری:</strong> ${String(
+                (item as any).note
+              ).slice(0, 800)}</div>`
+            : ""
+        }
       </td>
       <td style="padding: 12px; text-align: left;">
         ${formatToman(lineTotalToman)}<br>
@@ -136,6 +143,7 @@ export interface EmailPayload {
     price: number;
     color?: string;
     size?: string;
+    note?: string;
   }>;
   itemsPrice: number;
   shippingPrice?: number;

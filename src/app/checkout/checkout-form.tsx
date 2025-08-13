@@ -93,6 +93,7 @@ const CheckoutForm = () => {
       setIsSendingToSupport(true);
       // Prepare minimal payload for support
       const payload = {
+        // include notes as-is so support can read them
         items,
         itemsPrice: effectiveItemsPrice,
         shippingPrice,

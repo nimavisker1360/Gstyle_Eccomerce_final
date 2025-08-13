@@ -1,24 +1,24 @@
-import { IOrderInput } from '@/types'
-import { Document, Model, model, models, Schema } from 'mongoose'
+import { IOrderInput } from "@/types";
+import { Document, Model, model, models, Schema } from "mongoose";
 
 export interface IOrder extends Document, IOrderInput {
-  _id: string
-  createdAt: Date
-  updatedAt: Date
+  _id: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const orderSchema = new Schema<IOrder>(
   {
     user: {
       type: Schema.Types.ObjectId as unknown as typeof String,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     items: [
       {
         product: {
           type: Schema.Types.ObjectId,
-          ref: 'Product',
+          ref: "Product",
           required: true,
         },
         clientId: { type: String, required: true },
@@ -31,6 +31,7 @@ const orderSchema = new Schema<IOrder>(
         quantity: { type: Number, required: true },
         size: { type: String },
         color: { type: String },
+        note: { type: String },
       },
     ],
     shippingAddress: {
@@ -58,9 +59,9 @@ const orderSchema = new Schema<IOrder>(
   {
     timestamps: true,
   }
-)
+);
 
 const Order =
-  (models.Order as Model<IOrder>) || model<IOrder>('Order', orderSchema)
+  (models.Order as Model<IOrder>) || model<IOrder>("Order", orderSchema);
 
-export default Order
+export default Order;

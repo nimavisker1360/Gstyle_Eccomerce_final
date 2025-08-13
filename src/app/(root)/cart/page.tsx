@@ -3,6 +3,7 @@ import BrowsingHistoryList from "@/components/shared/browsing-history-list";
 import ProductPrice from "@/components/shared/product/product-price";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ export default function CartPage() {
     cart: { items },
     updateItem,
     removeItem,
+    updateItemNote,
   } = useCartStore();
   const computedItemsPrice = React.useMemo(
     () => items.reduce((acc, item) => acc + item.price * item.quantity, 0),
@@ -141,7 +143,22 @@ export default function CartPage() {
                             حذف
                           </Button>
                         </div>
-                        {/* unit price x qty removed by request */}
+                        {/* per-item note to ask questions */}
+                        <div className="mt-2">
+                          <label className="block text-sm mb-1">
+                            توضیحات/سوال شما برای این آیتم
+                          </label>
+                          <Textarea
+                            dir="rtl"
+                            className="bg-white"
+                            placeholder="اینجا سوال یا توضیح خود را درباره این محصول بنویسید..."
+                            value={item.note ?? ""}
+                            onChange={(e) =>
+                              updateItemNote(item.clientId, e.target.value)
+                            }
+                          />
+                          {/* auto-saved */}
+                        </div>
                       </div>
                       <div>
                         <p className="text-right text-blue-700">
