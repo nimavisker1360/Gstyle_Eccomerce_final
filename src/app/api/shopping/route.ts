@@ -424,7 +424,7 @@ export async function GET(request: NextRequest) {
           60
         );
 
-        const formattedProducts = cachedProducts.map((p) => ({
+        const formattedProducts = cachedProducts.map((p: any) => ({
           id: p.id,
           title: p.title_fa,
           originalTitle: p.title,
@@ -479,7 +479,7 @@ export async function GET(request: NextRequest) {
           console.log(
             `✅ Returning ${cachedProducts.length} cached products despite missing API key`
           );
-          const formattedProducts = cachedProducts.map((p) => ({
+          const formattedProducts = cachedProducts.map((p: any) => ({
             id: p.id,
             title: p.title_fa,
             originalTitle: p.title,

@@ -126,6 +126,10 @@ googleShoppingProductSchema.statics.getCachedProducts = async function (
     return await this.find({ category })
       .sort({ createdAt: -1 })
       .limit(limit)
+      .select(
+        "id title title_fa price link thumbnail source category createdAt"
+      )
+      .lean()
       .maxTimeMS(10000);
   } catch (error) {
     console.error(`❌ Error in getCachedProducts for ${category}:`, error);
