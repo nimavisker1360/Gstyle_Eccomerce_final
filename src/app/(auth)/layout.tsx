@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import GoogleOAuthDebug from "@/components/shared/google-oauth-debug";
+import HeaderMonitorDashboard from "@/components/shared/header-monitor-dashboard";
 
 export default async function AuthLayout({
   children,
@@ -35,6 +37,10 @@ export default async function AuthLayout({
       <main className="mx-auto max-w-sm min-w-80 p-4 text-right">
         {children}
       </main>
+
+      {/* Debug components - only show in development */}
+      <GoogleOAuthDebug />
+      <HeaderMonitorDashboard />
     </div>
   );
 }

@@ -40,13 +40,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
-      // تنظیمات اضافی برای کاهش اندازه هدرها
+      // تنظیمات بهینه‌شده برای کاهش اندازه هدرها و بهبود Google OAuth
       authorization: {
         params: {
           prompt: "consent",
           access_type: "offline",
           response_type: "code",
+          scope: "openid email profile", // محدود کردن scope برای کاهش اندازه token
         },
+      },
+      // تنظیمات profile برای کاهش داده‌های ذخیره شده
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          // حذف سایر فیلدهای غیرضروری برای کاهش اندازه session
+        };
       },
     }),
     CredentialsProvider({
@@ -171,7 +182,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   useSecureCookies: process.env.NODE_ENV === "production",
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name:
+        process.env.NODE_ENV === "production"
+          ? `__Host-next-auth.session-token`
+          : `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
@@ -182,23 +196,71 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     // تنظیمات بهینه برای کاهش اندازه cookies
     callbackUrl: {
-      name: `next-auth.callback-url`,
+      name:
+        process.env.NODE_ENV === "production"
+          ? `__Host-next-auth.callback-url`
+          : `next-auth.callback-url`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60, // 1 ساعت
+        maxAge: 30 * 60, // کاهش به 30 دقیقه برای کاهش اندازه
       },
     },
     csrfToken: {
-      name: `next-auth.csrf-token`,
+      name:
+        process.env.NODE_ENV === "production"
+          ? `__Host-next-auth.csrf-token`
+          : `next-auth.csrf-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60, // 1 ساعت
+        maxAge: 30 * 60, // کاهش به 30 دقیقه برای کاهش اندازه
+      },
+    },
+    // بهینه‌سازی state cookie برای Google OAuth
+    state: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? `__Host-next-auth.state`
+          : `next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60, // 15 دقیقه فقط
+      },
+    },
+    // بهینه‌سازی pkceCodeVerifier برای Google OAuth
+    pkceCodeVerifier: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? `__Host-next-auth.pkce.code_verifier`
+          : `next-auth.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60, // 15 دقیقه فقط
+      },
+    },
+    // بهینه‌سازی nonce برای Google OAuth
+    nonce: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? `__Host-next-auth.nonce`
+          : `next-auth.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60, // 15 دقیقه فقط
       },
     },
   },

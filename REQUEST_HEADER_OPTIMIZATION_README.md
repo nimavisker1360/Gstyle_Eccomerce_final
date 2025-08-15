@@ -116,8 +116,88 @@ export const GET = withHeaderValidation(async (req: NextRequest) => {
 - امنیت را افزایش می‌دهند
 - قابلیت نگهداری کد را بهبود می‌بخشند
 
+### 8. مانیتورینگ و تحلیل پیشرفته
+
+#### نیو در این به‌روزرسانی:
+
+- **Header Monitor (`src/lib/header-monitor.ts`)**: سیستم تحلیل و مانیتورینگ پیشرفته
+- **Client Header Utils (`src/lib/client-header-utils.ts`)**: ابزارهای client-side برای validation
+- **Header Monitor Dashboard (`src/components/shared/header-monitor-dashboard.tsx`)**: داشبورد visual برای development
+- **Enhanced Middleware**: middleware بهینه‌شده با قابلیت‌های تحلیل بیشتر
+- **Safe Fetch Wrapper**: wrapper امن برای درخواست‌های HTTP
+
+#### ویژگی‌های جدید:
+
+1. **تحلیل دقیق هدرها**: شناسایی بزرگترین هدرها و منابع مشکل
+2. **هشدارهای هوشمند**: هشدار در 80% ظرفیت برای پیشگیری از مشکل
+3. **مانیتورینگ real-time**: بررسی مداوم اندازه localStorage و cookies
+4. **بهینه‌سازی خودکار**: کاهش خودکار اندازه cookies و هدرها
+5. **Development Dashboard**: ابزار visual برای نظارت در development mode
+
+#### نحوه استفاده:
+
+```typescript
+// استفاده از safeFetch در client
+import { safeFetch } from "@/lib/client-header-utils";
+
+const response = await safeFetch("/api/cart", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data),
+});
+```
+
+```typescript
+// استفاده از header monitoring در API routes
+import { withHeaderMonitoring } from "@/lib/header-monitor";
+
+export const GET = withHeaderMonitoring(async (req) => {
+  // کد API شما
+});
+```
+
+#### فعال‌سازی Dashboard:
+
+Dashboard به صورت خودکار در development mode نمایش داده می‌شود. برای فعال‌سازی در component:
+
+```tsx
+import HeaderMonitorDashboard from "@/components/shared/header-monitor-dashboard";
+
+export default function Layout({ children }) {
+  return (
+    <>
+      {children}
+      <HeaderMonitorDashboard />
+    </>
+  );
+}
+```
+
+## نتایج بهینه‌سازی
+
+### بهبودهای اندازه:
+
+- **Session Duration**: کاهش از 30 روز به 7 روز (-77%)
+- **Cookie Expiry**: کاهش callback و CSRF از 1 ساعت به 30 دقیقه (-50%)
+- **Header Validation**: بافر 2KB برای جلوگیری از edge cases
+- **Client-side Validation**: پیشگیری از ارسال درخواست‌های بزرگ
+
+### امنیت بهبود یافته:
+
+- **Secure Cookie Names**: استفاده از پیشوند `__Host-`
+- **Reduced Attack Surface**: کاهش زمان عمر توکن‌ها
+- **Header Sanitization**: پاک‌سازی خودکار هدرهای غیرضروری
+
+### نظارت و عیب‌یابی:
+
+- **Real-time Monitoring**: مانیتورینگ مداوم اندازه هدرها
+- **Detailed Logging**: لاگ دقیق برای troubleshooting
+- **Visual Dashboard**: ابزار گرافیکی برای نظارت در development
+
 ## منابع
 
 - [Vercel Documentation](https://vercel.com/docs)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [HTTP Headers Specification](https://tools.ietf.org/html/rfc7230)
+- [Web Security Best Practices](https://owasp.org/www-project-web-security-testing-guide/)
+- [Cookie Security Guidelines](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)

@@ -1,26 +1,42 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
+import { analyzeRequestHeaders, logHeaderAnalysis } from "@/lib/header-monitor";
 
 // تابع برای بررسی اندازه هدرها
 function validateHeaderSize(req: NextRequest): boolean {
   const headers = req.headers;
   let totalSize = 0;
+  const maxSize = 30 * 1024; // 30KB limit (2KB buffer under Vercel's 32KB limit)
 
   // بررسی اندازه کل هدرها
   headers.forEach((value, key) => {
     totalSize += key.length + (value?.length || 0);
   });
 
-  // اگر اندازه هدرها بیشتر از 30KB باشد، خطا برگردان
-  return totalSize <= 30 * 1024;
+  // لاگ کردن اندازه هدرها برای مانیتورینگ
+  if (totalSize > maxSize * 0.8) {
+    // هشدار در 80% ظرفیت
+    // eslint-disable-next-line no-console
+    console.warn(
+      `Header size warning: ${totalSize} bytes (${((totalSize / maxSize) * 100).toFixed(1)}% of limit)`
+    );
+  }
+
+  // اگر اندازه هدرها بیشتر از حد مجاز باشد، خطا برگردان
+  return totalSize <= maxSize;
 }
 
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // تحلیل و مانیتورینگ هدرها
+  const headerAnalysis = analyzeRequestHeaders(req);
+  logHeaderAnalysis(req, headerAnalysis);
+
   // بررسی اندازه هدرها
   if (!validateHeaderSize(req)) {
+    // eslint-disable-next-line no-console
     console.warn("Request headers too large, rejecting request");
     return new NextResponse("Request headers too large", { status: 431 });
   }

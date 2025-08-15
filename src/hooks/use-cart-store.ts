@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 
 import { Cart, OrderItem, ShippingAddress } from "@/types";
 import { calcDeliveryDateAndPrice } from "@/lib/actions/order.actions";
+import { safeFetch } from "@/lib/client-header-utils";
 
 const initialState: Cart = {
   items: [],
@@ -65,7 +66,7 @@ const persistCartToServer = (cart: Cart) => {
 
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      fetch("/api/cart", {
+      safeFetch("/api/cart", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -256,7 +257,7 @@ const useCartStore = create(
           // بهینه‌سازی داده‌ها قبل از ارسال
           const optimizedCart = optimizeCartForSync(cart);
 
-          await fetch("/api/cart", {
+          await safeFetch("/api/cart", {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
