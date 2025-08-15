@@ -1,164 +1,142 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cacheService } from "@/lib/services/cache-service";
+import { redis } from "@/lib/redis";
 import { connectToDatabase } from "@/lib/db";
 import GoogleShoppingProduct from "@/lib/db/models/google-shopping-product.model";
 
-// Cache management API
 export async function GET(request: NextRequest) {
   try {
-    await connectToDatabase();
-
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
-    const category = searchParams.get("category");
 
-    if (action === "stats") {
-      // Get cache statistics
-      const stats = await GoogleShoppingProduct.aggregate([
-        {
-          $group: {
-            _id: "$category",
-            count: { $sum: 1 },
-            oldestProduct: { $min: "$createdAt" },
-            newestProduct: { $max: "$createdAt" },
-          },
-        },
-        {
-          $sort: { count: -1 },
-        },
-      ]);
-
-      return NextResponse.json({
-        success: true,
-        stats,
-        totalProducts: await GoogleShoppingProduct.countDocuments(),
-        categories: stats.map((s) => s._id),
-      });
-    }
-
-    if (action === "cleanup") {
-      // Clean up old products and limit per category
-      const categories = await GoogleShoppingProduct.distinct("category");
-      let totalDeleted = 0;
-
-      for (const cat of categories) {
-        const deleted = await GoogleShoppingProduct.limitProductsPerCategory(
-          cat,
-          60
+    switch (action) {
+      case "stats":
+        return await getCacheStats();
+      case "clear":
+        return await clearCache(request);
+      default:
+        return NextResponse.json(
+          { error: "Invalid action. Use: stats, clear" },
+          { status: 400 }
         );
-        const count = await GoogleShoppingProduct.countDocuments({
-          category: cat,
-        });
-        console.log(`📊 Category ${cat}: ${count} products`);
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: "Cache cleanup completed",
-        categories: categories.length,
-      });
     }
-
-    if (action === "get-cached" && category) {
-      // Get cached products for a specific category
-      const products = await GoogleShoppingProduct.getCachedProducts(
-        category,
-        60
-      );
-
-      return NextResponse.json({
-        success: true,
-        category,
-        products: products.map((p) => ({
-          id: p.id,
-          title: p.title_fa,
-          originalTitle: p.title,
-          price: parseFloat(p.price),
-          image: p.thumbnail,
-          link: p.link,
-          source: p.source,
-          createdAt: p.createdAt,
-        })),
-        count: products.length,
-      });
-    }
-
-    return NextResponse.json(
-      {
-        error: "Invalid action. Use: stats, cleanup, or get-cached",
-      },
-      { status: 400 }
-    );
   } catch (error) {
-    console.error("❌ Cache manager error:", error);
+    console.error("❌ Error in cache manager:", error);
     return NextResponse.json(
-      {
-        error: "Cache management failed",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
-// POST method for manual cache operations
 export async function POST(request: NextRequest) {
+  return GET(request);
+}
+
+async function getCacheStats() {
   try {
+    // آمار Redis
+    const redisKeys = await redis.dbsize();
+
+    // آمار MongoDB
     await connectToDatabase();
+    const mongoCount = await GoogleShoppingProduct.countDocuments();
+    const mongoCategories = await GoogleShoppingProduct.aggregate([
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
 
-    const body = await request.json();
-    const { action, category, products } = body;
+    // آمار کلی
+    const totalCacheSize = redisKeys + mongoCount;
+    const cacheEfficiency =
+      mongoCount > 0 ? ((mongoCount / (mongoCount + 1)) * 100).toFixed(2) : "0";
 
-    if (action === "save-products" && category && products) {
-      // Save new products to cache
-      const savedProducts = [];
+    return NextResponse.json({
+      success: true,
+      stats: {
+        redis: {
+          keys: redisKeys,
+          status: "connected",
+        },
+        mongodb: {
+          totalProducts: mongoCount,
+          categories: mongoCategories,
+        },
+        overall: {
+          totalCacheSize,
+          cacheEfficiency: `${cacheEfficiency}%`,
+          estimatedSerpApiSavings: `${cacheEfficiency}%`,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error getting cache stats:", error);
+    return NextResponse.json(
+      { error: "Failed to get cache stats" },
+      { status: 500 }
+    );
+  }
+}
 
-      for (const product of products) {
-        try {
-          const productData = {
-            id: product.id,
-            title: product.originalTitle || product.title,
-            title_fa: product.title,
-            price: product.price.toString(),
-            link: product.link,
-            thumbnail: product.image,
-            source: product.source || "فروشگاه آنلاین",
-            category: category,
-            createdAt: new Date(),
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-          };
+async function clearCache(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type"); // redis, mongodb, all
+    const category = searchParams.get("category");
 
-          const savedProduct = new GoogleShoppingProduct(productData);
-          await savedProduct.save();
-          savedProducts.push(savedProduct);
-        } catch (error) {
-          console.error(`❌ Error saving product ${product.id}:`, error);
-        }
-      }
-
-      // Limit products per category after saving
-      await GoogleShoppingProduct.limitProductsPerCategory(category, 60);
-
-      return NextResponse.json({
-        success: true,
-        message: `Saved ${savedProducts.length} products to cache`,
-        category,
-        savedCount: savedProducts.length,
-      });
+    if (!type || !["redis", "mongodb", "all"].includes(type)) {
+      return NextResponse.json(
+        { error: "Invalid type. Use: redis, mongodb, all" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(
-      {
-        error: "Invalid action or missing parameters",
+    let clearedItems = 0;
+
+    switch (type) {
+      case "redis":
+        if (category) {
+          const pattern = `search:${category}:*`;
+          await cacheService.clearRedisCache(pattern);
+          clearedItems = 1;
+        } else {
+          await cacheService.clearRedisCache();
+          clearedItems = 1;
+        }
+        break;
+
+      case "mongodb":
+        if (category) {
+          await cacheService.clearMongoDBCache(category);
+          clearedItems = 1;
+        } else {
+          await cacheService.clearMongoDBCache();
+          clearedItems = 1;
+        }
+        break;
+
+      case "all":
+        await Promise.all([
+          cacheService.clearRedisCache(),
+          cacheService.clearMongoDBCache(),
+        ]);
+        clearedItems = 2;
+        break;
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Cache cleared successfully`,
+      cleared: {
+        type,
+        category: category || "all",
+        items: clearedItems,
       },
-      { status: 400 }
-    );
+    });
   } catch (error) {
-    console.error("❌ Cache manager POST error:", error);
+    console.error("❌ Error clearing cache:", error);
     return NextResponse.json(
-      {
-        error: "Cache operation failed",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
+      { error: "Failed to clear cache" },
       { status: 500 }
     );
   }
