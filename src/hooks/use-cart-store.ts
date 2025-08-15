@@ -19,7 +19,7 @@ interface CartState {
   cart: Cart;
   addItem: (item: OrderItem, quantity: number) => Promise<string>;
   updateItem: (item: OrderItem, quantity: number) => void;
-  updateItemNote: (clientItemId: string, note: string) => void;
+  updateItemNote: (item: OrderItem, note: string) => void;
   removeItem: (item: OrderItem) => void;
   clearCart: () => void;
   replaceCart: (cart: Cart) => void;
@@ -30,20 +30,51 @@ interface CartState {
   setDeliveryDateIndex: (index: number) => void;
 }
 
+// تابع برای بهینه‌سازی داده‌های سبد خرید قبل از ارسال
+function optimizeCartForSync(cart: Cart): Partial<Cart> {
+  return {
+    items: cart.items.map((item) => ({
+      clientId: item.clientId,
+      product: item.product,
+      name: item.name,
+      slug: item.slug,
+      category: item.category,
+      quantity: item.quantity,
+      countInStock: item.countInStock,
+      image: item.image,
+      price: item.price,
+      color: item.color,
+      size: item.size,
+      note: item.note,
+    })),
+    shippingAddress: cart.shippingAddress,
+    paymentMethod: cart.paymentMethod,
+    deliveryDateIndex: cart.deliveryDateIndex,
+  };
+}
+
 // Lightweight client-side saver to sync cart to server when authenticated.
 let saveTimer: any | null = null;
 const persistCartToServer = (cart: Cart) => {
   try {
     if (typeof window === "undefined") return;
     if (!cart.items || cart.items.length === 0) return; // never overwrite with empty
+
+    // بهینه‌سازی داده‌ها قبل از ارسال
+    const optimizedCart = optimizeCartForSync(cart);
+
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       fetch("/api/cart", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cart),
+        headers: {
+          "Content-Type": "application/json",
+          // کاهش اندازه هدرها
+          Accept: "application/json",
+        },
+        body: JSON.stringify(optimizedCart),
       }).catch(() => {});
-    }, 300);
+    }, 500); // افزایش تاخیر برای کاهش تعداد درخواست‌ها
   } catch {}
 };
 
@@ -131,10 +162,10 @@ const useCartStore = create(
         });
         persistCartToServer(get().cart);
       },
-      updateItemNote: (clientItemId: string, note: string) => {
+      updateItemNote: (item: OrderItem, note: string) => {
         const { items, shippingAddress } = get().cart;
         const updatedCartItems = items.map((x) =>
-          x.clientId === clientItemId ? { ...x, note } : x
+          x.clientId === item.clientId ? { ...x, note } : x
         );
         set({
           cart: {
@@ -221,10 +252,17 @@ const useCartStore = create(
         try {
           const cart = get().cart;
           if (!cart.items || cart.items.length === 0) return;
+
+          // بهینه‌سازی داده‌ها قبل از ارسال
+          const optimizedCart = optimizeCartForSync(cart);
+
           await fetch("/api/cart", {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(cart),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify(optimizedCart),
           });
         } catch {}
       },

@@ -14,7 +14,8 @@ const nextConfig = {
   },
   // تنظیمات برای حل مشکل REQUEST_HEADER_TOO_LARGE
   experimental: {
-    serverComponentsExternalPackages: ["@auth/mongodb-adapter"],
+    // حذف serverComponentsExternalPackages برای جلوگیری از conflict
+    // optimizePackageImports: ["@auth/mongodb-adapter"],
   },
   // تنظیمات هدرها
   async headers() {
@@ -28,11 +29,45 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/api/cart/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+        ],
+      },
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Requested-With",
+            value: "XMLHttpRequest",
+          },
+        ],
+      },
     ];
   },
   // تنظیمات برای کاهش اندازه هدرها
   compress: true,
   poweredByHeader: false,
+  // تنظیمات اضافی برای بهینه‌سازی
+  swcMinify: true,
+  // تنظیمات برای کاهش اندازه bundle
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

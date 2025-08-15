@@ -154,7 +154,7 @@ export default function CartPage() {
                             placeholder="اینجا سوال یا توضیح خود را درباره این محصول بنویسید..."
                             value={item.note ?? ""}
                             onChange={(e) =>
-                              updateItemNote(item.clientId, e.target.value)
+                              updateItemNote(item, e.target.value)
                             }
                           />
                           {/* auto-saved */}

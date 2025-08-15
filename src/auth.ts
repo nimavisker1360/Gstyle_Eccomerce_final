@@ -28,11 +28,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // کاهش به 7 روز برای کاهش اندازه
     updateAge: 24 * 60 * 60, // 24 hours
   },
   jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // کاهش به 7 روز برای کاهش اندازه
   },
   adapter: MongoDBAdapter(client),
   providers: [
@@ -106,7 +106,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // فقط اطلاعات ضروری را در token ذخیره کن
         token.name = user.name || user.email!.split("@")[0];
         token.role = (user as { role: string }).role;
-        token.mobile = (user as { mobile?: string }).mobile;
+        // حذف mobile از token برای کاهش اندازه
+        // token.mobile = (user as { mobile?: string }).mobile;
       }
 
       if (session?.user?.name && trigger === "update") {
@@ -125,9 +126,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.name) {
         session.user.name = token.name;
       }
-      if (token.mobile) {
-        session.user.mobile = token.mobile as string;
-      }
+      // حذف mobile از session برای کاهش اندازه
+      // if (token.mobile) {
+      //   session.user.mobile = token.mobile as string;
+      // }
       return session;
     },
     // اضافه کردن callback برای مدیریت بهتر خطاها
@@ -175,7 +177,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        maxAge: 7 * 24 * 60 * 60, // کاهش به 7 روز
+      },
+    },
+    // تنظیمات بهینه برای کاهش اندازه cookies
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60, // 1 ساعت
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60, // 1 ساعت
       },
     },
   },

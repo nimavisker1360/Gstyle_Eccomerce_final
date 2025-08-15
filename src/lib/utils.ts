@@ -1,8 +1,104 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// تابع برای بررسی اندازه هدرها
+export function validateHeaderSize(headers: Headers): {
+  isValid: boolean;
+  size: number;
+  maxSize: number;
+} {
+  let totalSize = 0;
+  const maxSize = 32 * 1024; // 32KB limit
+
+  headers.forEach((value, key) => {
+    totalSize += key.length + (value?.length || 0);
+  });
+
+  return {
+    isValid: totalSize <= maxSize,
+    size: totalSize,
+    maxSize,
+  };
+}
+
+// تابع برای بهینه‌سازی هدرها
+export function optimizeHeaders(headers: Headers): Headers {
+  const optimized = new Headers();
+
+  // فقط هدرهای ضروری را نگه دار
+  const essentialHeaders = [
+    "authorization",
+    "content-type",
+    "accept",
+    "user-agent",
+    "referer",
+    "origin",
+  ];
+
+  headers.forEach((value, key) => {
+    if (
+      essentialHeaders.includes(key.toLowerCase()) ||
+      key.toLowerCase().startsWith("x-")
+    ) {
+      optimized.set(key, value);
+    }
+  });
+
+  return optimized;
+}
+
+// تابع برای بررسی اندازه cookies
+export function validateCookieSize(cookies: string): {
+  isValid: boolean;
+  size: number;
+  maxSize: number;
+} {
+  const maxSize = 16 * 1024; // 16KB limit per cookie
+  const size = new TextEncoder().encode(cookies).length;
+
+  return {
+    isValid: size <= maxSize,
+    size,
+    maxSize,
+  };
+}
+
+// تابع برای بهینه‌سازی داده‌های session
+export function optimizeSessionData(session: any): any {
+  if (!session) return session;
+
+  // حذف فیلدهای غیرضروری
+  const { user, ...rest } = session;
+  if (user) {
+    const { id, name, email, role, ...userRest } = user;
+    return {
+      user: { id, name, email, role },
+      ...rest,
+    };
+  }
+
+  return session;
+}
+
+// تابع برای بررسی اندازه درخواست
+export function validateRequestSize(req: Request): {
+  isValid: boolean;
+  size: number;
+  maxSize: number;
+} {
+  const maxSize = 100 * 1024; // 100KB limit for request body
+  const contentLength = req.headers.get("content-length");
+  const size = contentLength ? parseInt(contentLength) : 0;
+
+  return {
+    isValid: size <= maxSize,
+    size,
+    maxSize,
+  };
 }
 
 export const formatNumberWithDecimal = (num: number): string => {

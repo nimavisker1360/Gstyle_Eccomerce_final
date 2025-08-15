@@ -4,33 +4,33 @@ import { connectToDatabase } from "@/lib/db";
 import Cart from "@/lib/db/models/cart.model";
 import { Cart as CartType } from "@/types";
 import { calcDeliveryDateAndPrice } from "@/lib/actions/order.actions";
+import {
+  withHeaderValidation,
+  createSuccessResponse,
+  createErrorResponse,
+} from "@/lib/api-wrapper";
 
-export async function GET() {
+export const GET = withHeaderValidation(async () => {
   try {
     await connectToDatabase();
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ success: true, data: null });
+      return createSuccessResponse(null);
     }
     const doc = await Cart.findOne({ user: session.user.id });
-    return NextResponse.json({ success: true, data: doc });
+    return createSuccessResponse(doc);
   } catch (e) {
-    return NextResponse.json(
-      { success: false, error: "Failed to load cart" },
-      { status: 500 }
-    );
+    return createErrorResponse("Failed to load cart", 500);
   }
-}
+});
 
-export async function PUT(req: NextRequest) {
+export const PUT = withHeaderValidation(async (req: NextRequest) => {
   try {
     await connectToDatabase();
     const session = await auth();
-    if (!session?.user?.id)
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+    if (!session?.user?.id) {
+      return createErrorResponse("Unauthorized", 401);
+    }
 
     const body = (await req.json()) as CartType;
     const recomputed = calcDeliveryDateAndPrice({
@@ -58,11 +58,8 @@ export async function PUT(req: NextRequest) {
       payload,
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
-    return NextResponse.json({ success: true, data: doc });
+    return createSuccessResponse(doc);
   } catch (e) {
-    return NextResponse.json(
-      { success: false, error: "Failed to save cart" },
-      { status: 500 }
-    );
+    return createErrorResponse("Failed to save cart", 500);
   }
-}
+});

@@ -2,8 +2,28 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 
+// تابع برای بررسی اندازه هدرها
+function validateHeaderSize(req: NextRequest): boolean {
+  const headers = req.headers;
+  let totalSize = 0;
+
+  // بررسی اندازه کل هدرها
+  headers.forEach((value, key) => {
+    totalSize += key.length + (value?.length || 0);
+  });
+
+  // اگر اندازه هدرها بیشتر از 30KB باشد، خطا برگردان
+  return totalSize <= 30 * 1024;
+}
+
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // بررسی اندازه هدرها
+  if (!validateHeaderSize(req)) {
+    console.warn("Request headers too large, rejecting request");
+    return new NextResponse("Request headers too large", { status: 431 });
+  }
 
   // تنظیمات هدر برای کاهش اندازه
   const response = NextResponse.next();
@@ -12,7 +32,7 @@ export default async function middleware(req: NextRequest) {
   response.headers.delete("x-powered-by");
   response.headers.delete("x-vercel-cache");
 
-  // تنظیم هدرهای امنیتی
+  // تنظیم هدرهای امنیتی با اندازه بهینه
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
