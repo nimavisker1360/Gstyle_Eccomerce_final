@@ -55,7 +55,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: profile.sub,
           name: profile.name,
           email: profile.email,
-          image: profile.picture,
           // حذف سایر فیلدهای غیرضروری برای کاهش اندازه session
         };
       },
@@ -113,34 +112,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     jwt: async ({ token, user, trigger, session }) => {
+      // فقط فیلدهای ضروری را نگه دارید
       if (user) {
-        // فقط اطلاعات ضروری را در token ذخیره کن
-        token.name = user.name || user.email!.split("@")[0];
-        token.role = (user as { role: string }).role;
-        // حذف mobile از token برای کاهش اندازه
-        // token.mobile = (user as { mobile?: string }).mobile;
+        token.name = user.name || user.email?.split("@")[0] || token.name;
+        token.email = user.email || (token.email as string | undefined);
+        token.role =
+          (user as { role?: string }).role ??
+          (token.role as string | undefined);
+
+        // حذف فیلدهای غیرضروری برای کاهش اندازه JWT
+        delete (token as any).picture;
+        delete (token as any).image;
+        delete (token as any).given_name;
+        delete (token as any).family_name;
       }
 
-      if (session?.user?.name && trigger === "update") {
+      if (trigger === "update" && session?.user?.name) {
         token.name = session.user.name;
       }
+
       return token;
     },
     session: async ({ session, token }) => {
-      // فقط اطلاعات ضروری را در session ذخیره کن
-      if (token.sub) {
-        session.user.id = token.sub;
-      }
-      if (token.role) {
-        session.user.role = token.role as string;
-      }
-      if (token.name) {
-        session.user.name = token.name;
-      }
-      // حذف mobile از session برای کاهش اندازه
-      // if (token.mobile) {
-      //   session.user.mobile = token.mobile as string;
-      // }
+      // فقط فیلدهای ضروری را به کلاینت بفرستید
+      session.user = {
+        id: (token.sub as string | undefined) ?? (session.user as any)?.id,
+        name: (token.name as string | undefined) ?? session.user?.name,
+        email: (token.email as string | undefined) ?? session.user?.email,
+        role: (token.role as string | undefined) ?? (session.user as any)?.role,
+      } as any;
+
       return session;
     },
     // اضافه کردن callback برای مدیریت بهتر خطاها
