@@ -8,6 +8,7 @@ import User from "@/lib/db/models/user.model";
 import NextAuth, { type DefaultSession } from "next-auth";
 import authConfig from "../auth.config";
 import Google from "next-auth/providers/google";
+
 declare module "next-auth" {
   // eslint-disable-next-line no-unused-vars
   interface Session {
@@ -27,12 +28,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   adapter: MongoDBAdapter(client),
   providers: [
     Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
+      // تنظیمات اضافی برای کاهش اندازه هدرها
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
     CredentialsProvider({
       credentials: {
@@ -88,6 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt: async ({ token, user, trigger, session }) => {
       if (user) {
+        // فقط اطلاعات ضروری را در token ذخیره کن
         token.name = user.name || user.email!.split("@")[0];
         token.role = (user as { role: string }).role;
         token.mobile = (user as { mobile?: string }).mobile;
@@ -98,15 +114,69 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
-    session: async ({ session, user, trigger, token }) => {
-      session.user.id = token.sub as string;
-      session.user.role = token.role as string;
-      session.user.name = token.name;
-      session.user.mobile = token.mobile as string;
-      if (trigger === "update") {
-        session.user.name = user.name;
+    session: async ({ session, token }) => {
+      // فقط اطلاعات ضروری را در session ذخیره کن
+      if (token.sub) {
+        session.user.id = token.sub;
+      }
+      if (token.role) {
+        session.user.role = token.role as string;
+      }
+      if (token.name) {
+        session.user.name = token.name;
+      }
+      if (token.mobile) {
+        session.user.mobile = token.mobile as string;
       }
       return session;
+    },
+    // اضافه کردن callback برای مدیریت بهتر خطاها
+    signIn: async ({ user, account, profile }) => {
+      // برای Google OAuth
+      if (account?.provider === "google") {
+        try {
+          await connectToDatabase();
+
+          // بررسی وجود کاربر
+          const existingUser = await User.findOne({ email: user.email });
+
+          if (!existingUser) {
+            // ایجاد کاربر جدید با اطلاعات Google
+            const newUser = new User({
+              name: user.name,
+              email: user.email,
+              image: user.image,
+              role: "user", // نقش پیش‌فرض
+              emailVerified: new Date(),
+              createdAt: new Date(),
+            });
+            await newUser.save();
+          }
+
+          return true;
+        } catch (error) {
+          console.error("Error in Google sign-in:", error);
+          return false;
+        }
+      }
+
+      return true;
+    },
+  },
+  // تنظیمات اضافی برای کاهش اندازه هدرها
+  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET,
+  useSecureCookies: process.env.NODE_ENV === "production",
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      },
     },
   },
 });

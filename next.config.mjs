@@ -12,6 +12,27 @@ const nextConfig = {
       "via.placeholder.com",
     ],
   },
+  // تنظیمات برای حل مشکل REQUEST_HEADER_TOO_LARGE
+  experimental: {
+    serverComponentsExternalPackages: ["@auth/mongodb-adapter"],
+  },
+  // تنظیمات هدرها
+  async headers() {
+    return [
+      {
+        source: "/api/auth/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0",
+          },
+        ],
+      },
+    ];
+  },
+  // تنظیمات برای کاهش اندازه هدرها
+  compress: true,
+  poweredByHeader: false,
 };
 
 export default nextConfig;

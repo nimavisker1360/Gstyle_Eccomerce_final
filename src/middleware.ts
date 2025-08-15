@@ -1,7 +1,51 @@
-import NextAuth from "next-auth";
-import authConfig from "../auth.config";
+import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
 
-export const { auth: middleware } = NextAuth(authConfig);
+export default async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // تنظیمات هدر برای کاهش اندازه
+  const response = NextResponse.next();
+
+  // حذف هدرهای غیرضروری
+  response.headers.delete("x-powered-by");
+  response.headers.delete("x-vercel-cache");
+
+  // تنظیم هدرهای امنیتی
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+
+  // تنظیمات کش برای API routes
+  if (pathname.startsWith("/api/")) {
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+  }
+
+  // بررسی مسیرهای محافظت شده
+  const protectedPaths = [
+    /\/checkout(\/.*)?/,
+    /\/account(\/.*)?/,
+    /\/admin(\/.*)?/,
+  ];
+
+  if (protectedPaths.some((p) => p.test(pathname))) {
+    try {
+      const token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      if (!token) {
+        return NextResponse.redirect(new URL("/sign-in", req.url));
+      }
+    } catch (error) {
+      console.error("Middleware auth error:", error);
+      return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
+  }
+
+  return response;
+}
 
 export const config = {
   matcher: [
@@ -11,7 +55,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 };
