@@ -53,11 +53,8 @@ const discountProductSchema = new Schema<IDiscountProduct>(
 
 discountProductSchema.index({ createdAt: -1 });
 
-const DiscountProduct =
-  (models.DiscountProduct as IDiscountProductModel) ||
-  model<IDiscountProduct, IDiscountProductModel>(
-    "DiscountProduct",
-    discountProductSchema
-  );
+const DiscountProduct: Model<IDiscountProduct> =
+  (models.DiscountProduct as Model<IDiscountProduct>) ||
+  model<IDiscountProduct>("DiscountProduct", discountProductSchema);
 
 export default DiscountProduct;
