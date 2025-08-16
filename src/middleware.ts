@@ -60,7 +60,7 @@ export default async function middleware(req: NextRequest) {
 
   // بررسی مسیرهای محافظت شده
   const protectedPaths = [
-    /\/checkout(\/.*)?/,
+    // checkout آزاد شد تا مستقیم به /checkout بروید
     /\/account(\/.*)?/,
     /\/admin(\/.*)?/,
   ];
@@ -72,11 +72,21 @@ export default async function middleware(req: NextRequest) {
         secret: process.env.NEXTAUTH_SECRET,
       });
       if (!token) {
-        return NextResponse.redirect(new URL("/sign-in", req.url));
+        const callback = encodeURIComponent(
+          `${req.nextUrl.pathname}${req.nextUrl.search}`
+        );
+        return NextResponse.redirect(
+          new URL(`/sign-in?callbackUrl=${callback}`, req.url)
+        );
       }
     } catch (error) {
       console.error("Middleware auth error:", error);
-      return NextResponse.redirect(new URL("/sign-in", req.url));
+      const callback = encodeURIComponent(
+        `${req.nextUrl.pathname}${req.nextUrl.search}`
+      );
+      return NextResponse.redirect(
+        new URL(`/sign-in?callbackUrl=${callback}`, req.url)
+      );
     }
   }
 

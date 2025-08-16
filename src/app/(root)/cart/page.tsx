@@ -19,8 +19,10 @@ import { useRouter } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 import React from "react";
 import { CardDescription } from "@/components/ui/card";
+import { useSession } from "next-auth/react";
 
 export default function CartPage() {
+  const { status } = useSession();
   const {
     cart: { items },
     updateItem,
@@ -206,7 +208,15 @@ export default function CartPage() {
                     </span>{" "}
                   </div>
                   <Button
-                    onClick={() => router.push("/checkout")}
+                    onClick={() => {
+                      if (status !== "authenticated") {
+                        router.push(
+                          `/sign-in?callbackUrl=${encodeURIComponent("/checkout")}`
+                        );
+                      } else {
+                        router.push("/checkout");
+                      }
+                    }}
                     className="rounded-none w-full bg-green-600 hover:bg-green-700"
                   >
                     ادامه به تسویه حساب

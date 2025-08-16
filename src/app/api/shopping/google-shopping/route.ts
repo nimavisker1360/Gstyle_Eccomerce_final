@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
-    const query = searchParams.get("query");
+    const query = searchParams.get("query") || searchParams.get("q");
 
     if (!category || !query) {
       return NextResponse.json(
@@ -27,8 +27,11 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔍 Search request: ${query} in ${category}`);
 
-    // استفاده از سرویس کش هوشمند
-    const result = await cacheService.getProducts(query, category);
+    // استفاده از سرویس کش هوشمند (Redis 1h, Mongo 3d)
+    const result = await cacheService.getProducts(query, category, {
+      redisTTL: 60 * 60,
+      mongoTTL: 3,
+    });
 
     // اضافه کردن ترجمه فارسی دسته‌بندی
     const response = {

@@ -448,9 +448,11 @@ export async function GET(request: NextRequest) {
 
         try {
           // backfill Redis for faster subsequent reads
-          await redis.set(redisKey, JSON.stringify(dbResponse), {
-            ex: ONE_DAY_SECONDS,
-          });
+          await redis.setex(
+            redisKey,
+            ONE_DAY_SECONDS,
+            JSON.stringify(dbResponse)
+          );
         } catch (e) {
           console.error("❌ Redis set backfill failed:", e);
         }
@@ -503,9 +505,11 @@ export async function GET(request: NextRequest) {
           };
 
           try {
-            await redis.set(redisKey, JSON.stringify(dbOnlyResponse), {
-              ex: ONE_DAY_SECONDS,
-            });
+            await redis.setex(
+              redisKey,
+              ONE_DAY_SECONDS,
+              JSON.stringify(dbOnlyResponse)
+            );
           } catch {}
 
           return NextResponse.json(dbOnlyResponse);
@@ -1371,9 +1375,11 @@ export async function GET(request: NextRequest) {
 
     // Save fresh response to Redis for 24h and ensure Mongo already saved during processing
     try {
-      await redis.set(redisKey, JSON.stringify(responseData), {
-        ex: ONE_DAY_SECONDS,
-      });
+      await redis.setex(
+        redisKey,
+        ONE_DAY_SECONDS,
+        JSON.stringify(responseData)
+      );
     } catch (e) {
       console.error("❌ Redis set failed:", e);
     }

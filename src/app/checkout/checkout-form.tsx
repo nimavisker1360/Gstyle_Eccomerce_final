@@ -119,27 +119,16 @@ const CheckoutForm = () => {
         description: "اطلاعات شما برای پشتیبانی ارسال شد.",
         variant: "success",
       });
-
-      // Reset the form
-      shippingAddressForm.reset();
-
-      // Reset checkout states to go back to first step
-      setIsAddressSelected(false);
-      setIsPaymentMethodSelected(false);
-      setIsDeliveryDateSelected(false);
-
-      // Clear shipping address from cart
-      setShippingAddress(shippingAddressDefaultValues);
-
-      // brief delay for UX so the loader is visible
-      setTimeout(() => router.push("/"), 400);
+      // چند ثانیه لودینگ نمایش داده و سپس به خانه برگردیم
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      router.push("/");
     } catch {
       toast({
         description: "ارسال ناموفق بود. دوباره تلاش کنید.",
         variant: "destructive",
       });
     } finally {
-      // keep loader until navigation happens; do not turn off immediately
+      setIsSendingToSupport(false);
     }
   };
 

@@ -10,6 +10,8 @@ import {
 
 export interface IUser extends Document, IUserInput {
   _id: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +35,8 @@ const userSchema = new Schema<IUser>(
       country: { type: String },
       phone: { type: String },
     },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   {
     timestamps: true,

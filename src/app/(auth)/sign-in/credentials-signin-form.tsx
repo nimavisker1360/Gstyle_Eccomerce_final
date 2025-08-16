@@ -176,6 +176,14 @@ export default function CredentialsSignInForm() {
               ورود
             </Button>
           </div>
+          <div className="text-right text-sm">
+            <Link
+              href={`/forgot-password?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              className="underline"
+            >
+              رمز عبور را فراموش کردم
+            </Link>
+          </div>
           {/* <div className="text-sm text-right">
             با انجام ورود، با قوانین {APP_NAME} موافقت می‌کنید:{" "}
             <Link href="/page/conditions-of-use">شرایط استفاده</Link> و{" "}

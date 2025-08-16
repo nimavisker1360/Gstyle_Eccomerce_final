@@ -65,6 +65,14 @@ export class CacheService {
       const cached = await redis.get(key);
       if (cached) {
         console.log(`✅ Found in Redis cache: ${key}`);
+        if (typeof cached === "string") {
+          try {
+            return JSON.parse(cached);
+          } catch {
+            // if non-JSON string, return empty to avoid corrupt data usage
+            return null;
+          }
+        }
         return cached as any[];
       }
       return null;
@@ -83,7 +91,7 @@ export class CacheService {
     ttl: number
   ): Promise<void> {
     try {
-      await redis.setex(key, ttl, data);
+      await redis.setex(key, ttl, JSON.stringify(data));
       console.log(`💾 Cached in Redis: ${key} (TTL: ${ttl}s)`);
     } catch (error) {
       console.error("❌ Redis set error:", error);
