@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJson } from "serpapi";
 import { connectToDatabase } from "@/lib/db";
+import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
 import DiscountProduct from "@/lib/db/models/discount-product.model";
 
 // Curated fashion-focused queries (targeting popular Turkish fashion retailers)
@@ -120,6 +122,53 @@ let discountCache: {
 
 // Cache duration: 10 minutes for discounts
 const DISCOUNT_CACHE_TTL = 10 * 60 * 1000;
+
+// High-quality TR→FA translator that preserves brand names and unclear words
+async function translateTurkishToPersianKeepBrands(
+  title: string,
+  description: string
+): Promise<{ title: string; description: string }> {
+  if (!process.env.OPENAI_API_KEY) {
+    return { title, description };
+  }
+
+  try {
+    const prompt = `
+      متن زیر ممکن است ترکی یا انگلیسی باشد. آن را به فارسی روان و قابل فهم برای فروش اینترنتی ترجمه کن.
+      قوانین مهم:
+      - نام برندها/مدل‌ها/نام‌های اختصاصی را تغییر نده و همان‌طور که هستند نگه‌دار (مثل LC Waikiki, Trendyol, Zara).
+      - اگر کلمه‌ای معادل دقیق ندارد یا نام برند است، همان واژهٔ اصلی را حفظ کن.
+      - اعداد، واحدها و درصدها را حفظ کن.
+      - ترجمهٔ واضح، مختصر و طبیعی باشد.
+      - فقط خروجی JSON معتبر بده با کلیدهای "title" و "description".
+
+      عنوان: ${title}
+      توضیحات: ${description}
+
+      خروجی:
+      {"title":"...","description":"..."}
+    `;
+
+    const { text } = await generateText({
+      model: openai("gpt-4o-mini"),
+      prompt,
+      maxOutputTokens: 220,
+      temperature: 0.2,
+    });
+
+    try {
+      const parsed = JSON.parse(text);
+      return {
+        title: parsed.title?.toString()?.trim() || title,
+        description: parsed.description?.toString()?.trim() || description,
+      };
+    } catch {
+      return { title, description };
+    }
+  } catch {
+    return { title, description };
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -301,17 +350,15 @@ export async function GET(request: NextRequest) {
                 googleShoppingLink = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product.title)}`;
               }
 
-              const persianTitle = product.title;
-
               return {
                 id: product.product_id || `discount-${Date.now()}-${index}`,
-                title: persianTitle,
+                title: product.title,
                 originalTitle: product.title,
                 price: currentPrice,
                 originalPrice: null,
                 currency: "TRY",
                 image: product.thumbnail || "/images/placeholder.jpg",
-                description: product.snippet || persianTitle,
+                description: product.snippet || product.title,
                 originalDescription: product.snippet,
                 link: product.link,
                 googleShoppingLink: googleShoppingLink,
@@ -323,7 +370,19 @@ export async function GET(request: NextRequest) {
             })
             .filter(Boolean) as ShoppingProduct[];
 
-          return processedProducts;
+          // Translate title/description to Persian similar to main search API
+          const translated = await Promise.all(
+            processedProducts.map(async (p) => {
+              const { title, description } =
+                await translateTurkishToPersianKeepBrands(
+                  p.originalTitle || p.title,
+                  p.originalDescription || p.description
+                );
+              return { ...p, title, description } as ShoppingProduct;
+            })
+          );
+
+          return translated;
         } else {
           return [];
         }
