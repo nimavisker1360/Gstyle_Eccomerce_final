@@ -26,8 +26,7 @@ const discountQueries = [
   // Boyner
   "Boyner ayakkabı indirim",
   "Boyner çanta indirim",
-  // Penti
-  "Penti iç giyim indirim",
+  // Penti (underwear excluded by policy) — removed iç giyim query
   // International brands present in TR
   "Zara indirim",
   "Bershka indirim",

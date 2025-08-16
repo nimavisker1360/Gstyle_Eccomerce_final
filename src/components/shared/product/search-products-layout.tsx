@@ -80,6 +80,34 @@ export default function SearchProductsLayout({
     []
   );
 
+  // Sensitive/explicit product keywords to exclude (underwear, lingerie)
+  const EXCLUDED_SENSITIVE_KEYWORDS = useMemo(
+    () => [
+      // Persian
+      "لباس زیر",
+      "سوتین",
+      "شورت",
+      "لباس زیر زنانه",
+      "لباس زیر مردانه",
+      // Turkish
+      "iç giyim",
+      "ic giyim",
+      "içgiyim",
+      "sütyen",
+      "sutyen",
+      "külot",
+      "kilot",
+      "boxer",
+      // English
+      "underwear",
+      "lingerie",
+      "bra",
+      "panty",
+      "briefs",
+    ],
+    []
+  );
+
   // Queries that should immediately return empty results
   const EXCLUDED_QUERY_KEYWORDS = useMemo(
     () => [
@@ -118,6 +146,18 @@ export default function SearchProductsLayout({
       "xbox",
       "console",
       "ps5",
+      // Sensitive/explicit
+      "لباس زیر",
+      "سوتین",
+      "شورت",
+      "iç giyim",
+      "ic giyim",
+      "içgiyim",
+      "sütyen",
+      "külot",
+      "kilot",
+      "underwear",
+      "lingerie",
     ],
     []
   );
@@ -127,12 +167,16 @@ export default function SearchProductsLayout({
       return items.filter((p) => {
         const haystack =
           `${p.title || ""} ${p.originalTitle || ""} ${p.description || ""} ${p.originalDescription || ""}`.toLowerCase();
-        return !EXCLUDED_ELECTRONICS_KEYWORDS.some((kw: string) =>
+        const isElectronics = EXCLUDED_ELECTRONICS_KEYWORDS.some((kw: string) =>
           haystack.includes(kw.toLowerCase())
         );
+        const isSensitive = EXCLUDED_SENSITIVE_KEYWORDS.some((kw: string) =>
+          haystack.includes(kw.toLowerCase())
+        );
+        return !isElectronics && !isSensitive;
       });
     },
-    [EXCLUDED_ELECTRONICS_KEYWORDS]
+    [EXCLUDED_ELECTRONICS_KEYWORDS, EXCLUDED_SENSITIVE_KEYWORDS]
   );
 
   // Function to clear all search cache
